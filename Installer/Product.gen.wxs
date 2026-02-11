@@ -1,0 +1,79 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="*" Name="MenuProUI" Language="1046" Version="1.0.1"
+           Manufacturer="Solutions" UpgradeCode="b2d85e7b-5f4a-4d88-9b9d-9b4d02d6d2a1">
+
+    <Package InstallerVersion="500" Compressed="yes" InstallScope="perUser" />
+    <MajorUpgrade DowngradeErrorMessage="Uma versão mais nova do MenuProUI já está instalada." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Property Id="ARPPRODUCTICON" Value="MenuProUIIcon" />
+    <Icon Id="MenuProUIIcon" SourceFile="E:\Projetos\MenuProUi\Assets\menupro-ui.ico" />
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+
+      <!-- Necessário pra DirectoryRef funcionar -->
+      <Directory Id="DesktopFolder" />
+
+      <!-- App em LocalAppData (per-user) -->
+      <Directory Id="LocalAppDataFolder">
+        <Directory Id="INSTALLFOLDER" Name="MenuProUI" />
+      </Directory>
+
+      <!-- Start Menu (per-user) -->
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ApplicationProgramsFolder" Name="MenuProUI" />
+      </Directory>
+    </Directory>
+
+    <Feature Id="MainFeature" Title="MenuProUI" Level="1">
+      <ComponentGroupRef Id="AppFiles" />
+      <ComponentRef Id="StartMenuShortcuts" />
+      <ComponentRef Id="DesktopShortcut" />
+      <ComponentRef Id="Docs" />
+      <ComponentRef Id="Cleanup" />
+    </Feature>
+
+    <!-- Start Menu -->
+    <DirectoryRef Id="ApplicationProgramsFolder">
+      <Component Id="StartMenuShortcuts" Guid="{0bc4f0aa-793f-50b5-a7bc-6d024adf2ea5}">
+        <Shortcut Id="StartMenuShortcut"
+                  Name="MenuProUI"
+                  Description="Gerenciador de acessos (SSH/RDP/URL)"
+                  Target="[INSTALLFOLDER]MenuProUI.exe"
+                  WorkingDirectory="INSTALLFOLDER"
+                  Icon="MenuProUIIcon" />
+        <RemoveFolder Id="RemoveStartMenuFolder" Directory="ApplicationProgramsFolder" On="uninstall" />
+        <RegistryValue Root="HKCU" Key="Software\MenuProUI" Name="StartMenu" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <!-- Desktop -->
+    <DirectoryRef Id="DesktopFolder">
+      <Component Id="DesktopShortcut" Guid="{cf3e88f6-448b-5470-95cb-ba977f6722c1}">
+        <Shortcut Id="DesktopShortcutFile"
+                  Name="MenuProUI"
+                  Target="[INSTALLFOLDER]MenuProUI.exe"
+                  WorkingDirectory="INSTALLFOLDER"
+                  Icon="MenuProUIIcon" />
+        <RegistryValue Root="HKCU" Key="Software\MenuProUI" Name="Desktop" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <!-- README + Cleanup -->
+    <DirectoryRef Id="INSTALLFOLDER">
+      <Component Id="Docs" Guid="{c9bd0b80-9536-50b6-9276-7198b7c48850}">
+        <File Id="ReadmeDeps" Name="README-DEPENDENCIAS.txt" Source="E:\Projetos\MenuProUi\Installer\README-DEPENDENCIAS.txt" />
+        <RegistryValue Root="HKCU" Key="Software\MenuProUI" Name="Docs" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+
+      <Component Id="Cleanup" Guid="{b9b82a6d-2b6c-55cc-9968-96da49c4f1b5}">
+        <RemoveFolder Id="RemoveInstallFolder" Directory="INSTALLFOLDER" On="uninstall" />
+        <RegistryValue Root="HKCU" Key="Software\MenuProUI" Name="Cleanup" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <UIRef Id="WixUI_Minimal" />
+    <UIRef Id="WixUI_ErrorProgressText" />
+  </Product>
+</Wix>

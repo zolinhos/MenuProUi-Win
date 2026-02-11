@@ -1,0 +1,88 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="*"
+           Name="MenuProUI"
+           Manufacturer="Solutions"
+           Version="__VERSION__"
+           Language="1046"
+           UpgradeCode="{6CCC42AA-7ADB-4E6B-BEB3-825F7B7BE790}">
+
+    <Package InstallerVersion="500"
+             Compressed="yes"
+             InstallScope="perMachine"
+             Platform="x64" />
+
+    <MajorUpgrade DowngradeErrorMessage="Uma versão mais recente do MenuProUI já está instalada." />
+    <MediaTemplate />
+
+    <Icon Id="AppIcon" SourceFile="..\Assets\menupro-ui.ico" />
+    <Property Id="ARPPRODUCTICON" Value="AppIcon" />
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+
+    <!-- Abre o README instalado (usa FileId, evita warning de propriedade) -->
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Abrir guia de dependências (SSH/RDP)" />
+    <Property Id="WixShellExecTarget" Value="[#ReadmeDeps]" />
+    <CustomAction Id="LaunchReadme" BinaryKey="WixCA" DllEntry="WixShellExec" Impersonate="yes" />
+
+    <UIRef Id="WixUI_InstallDir" />
+    <UIRef Id="WixUI_ErrorProgressText" />
+
+    <UI>
+      <Publish Dialog="ExitDialog" Control="Finish" Event="DoAction" Value="LaunchReadme">
+        WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1
+      </Publish>
+    </UI>
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <!-- IMPORTANTE: ProgramFiles64Folder para x64 -->
+      <Directory Id="ProgramFiles64Folder">
+        <Directory Id="CompanyFolder" Name="MenuProUI">
+          <Directory Id="INSTALLFOLDER" Name="MenuProUI" />
+        </Directory>
+      </Directory>
+
+      <!-- IMPORTANTE: pastas comuns (All Users) -->
+      <Directory Id="CommonProgramMenuFolder">
+        <Directory Id="ApplicationProgramsFolder" Name="MenuProUI" />
+      </Directory>
+
+      <Directory Id="CommonDesktopFolder" />
+    </Directory>
+
+    <DirectoryRef Id="ApplicationProgramsFolder">
+      <Component Id="StartMenuShortcuts" Guid="{A4AB06E2-60FC-4D80-8ECB-BCD4AE585936}" Win64="yes">
+        <Shortcut Id="StartMenuShortcut"
+                  Name="MenuProUI"
+                  Target="[INSTALLFOLDER]MenuProUI.exe"
+                  WorkingDirectory="INSTALLFOLDER"
+                  Icon="AppIcon" />
+        <RemoveFolder Id="CleanProgramMenu" Directory="ApplicationProgramsFolder" On="uninstall" />
+        <RegistryValue Root="HKLM" Key="Software\MenuProUI" Name="StartMenu" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <DirectoryRef Id="CommonDesktopFolder">
+      <Component Id="DesktopShortcut" Guid="{8E3253DD-36CA-4C21-828B-195A3B5CFA39}" Win64="yes">
+        <Shortcut Id="DesktopShortcut"
+                  Name="MenuProUI"
+                  Target="[INSTALLFOLDER]MenuProUI.exe"
+                  WorkingDirectory="INSTALLFOLDER"
+                  Icon="AppIcon" />
+        <RegistryValue Root="HKLM" Key="Software\MenuProUI" Name="Desktop" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <DirectoryRef Id="INSTALLFOLDER">
+      <Component Id="Docs" Guid="{8371F039-3D58-4E0E-99B5-1690714E7D2D}" Win64="yes">
+        <File Id="ReadmeDeps" Source="README-DEPENDENCIAS.txt" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <Feature Id="MainFeature" Title="MenuProUI" Level="1">
+      <ComponentGroupRef Id="AppFiles" />
+      <ComponentRef Id="StartMenuShortcuts" />
+      <ComponentRef Id="DesktopShortcut" />
+      <ComponentRef Id="Docs" />
+    </Feature>
+  </Product>
+</Wix>
