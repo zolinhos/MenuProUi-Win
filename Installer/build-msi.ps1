@@ -63,13 +63,13 @@ $upgradeCode = [Guid]"B2D85E7B-5F4A-4D88-9B9D-9B4D02D6D2A1"
 $componentNamespace = [Guid]"9A6D7B6A-2D2B-4A41-9D12-3B1D5B6F1A11"
 
 # Descobrir paths de forma robusta
-$scriptPath = $MyInvocation.MyCommand.Path
+$scriptPath = [string]$MyInvocation.MyCommand.Path
 if ([string]::IsNullOrWhiteSpace($scriptPath)) { throw "Não consegui descobrir o caminho do script (MyInvocation vazio)." }
 
 $installerDir = Split-Path -Parent $scriptPath
 $root = Split-Path -Parent $installerDir
 
-$pf86 = [Environment]::GetFolderPath("ProgramFilesX86")
+$pf86 = [string][Environment]::GetFolderPath("ProgramFilesX86")
 
 # Procura WiX Toolset em locais comuns ou por executáveis no PATH
 $possible = @(
@@ -96,7 +96,11 @@ if (-not $wix) {
   } catch { }
 }
 
+
 if (-not $wix) { throw "WiX não encontrado em locais padrão. Instale WiX Toolset ou coloque heat/candle/light no PATH." }
+
+# garantir string única para Join-Path
+$wix = [string]$wix
 
 $heat   = Join-Path $wix "heat.exe"
 $candle = Join-Path $wix "candle.exe"
