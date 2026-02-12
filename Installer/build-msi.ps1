@@ -70,8 +70,33 @@ $installerDir = Split-Path -Parent $scriptPath
 $root = Split-Path -Parent $installerDir
 
 $pf86 = [Environment]::GetFolderPath("ProgramFilesX86")
-$wix  = Join-Path $pf86 "WiX Toolset v3.14\bin"
-if (!(Test-Path $wix)) { throw "WiX não encontrado em: $wix" }
+
+# Procura WiX Toolset em locais comuns ou por executáveis no PATH
+$possible = @(
+  Join-Path $pf86 "WiX Toolset v3.14\bin",
+  Join-Path $pf86 "WiX Toolset v3.11\bin",
+  Join-Path $pf86 "WiX Toolset v3.10\bin",
+  Join-Path $pf86 "WiX Toolset v3.8\bin"
+)
+
+$wix = $null
+foreach ($p in $possible) {
+  if (Test-Path $p) { $wix = $p; break }
+}
+
+if (-not $wix) {
+  $heatCmd = Get-Command heat -ErrorAction SilentlyContinue
+  if ($heatCmd) { $wix = Split-Path $heatCmd.Path -Parent }
+}
+
+if (-not $wix) {
+  try {
+    $found = Get-ChildItem -Path $pf86 -Recurse -Filter heat.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($found) { $wix = Split-Path $found.FullName -Parent }
+  } catch { }
+}
+
+if (-not $wix) { throw "WiX não encontrado em locais padrão. Instale WiX Toolset ou coloque heat/candle/light no PATH." }
 
 $heat   = Join-Path $wix "heat.exe"
 $candle = Join-Path $wix "candle.exe"
