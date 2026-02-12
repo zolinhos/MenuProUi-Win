@@ -85,14 +85,14 @@ foreach ($p in $possible) {
 }
 
 if (-not $wix) {
-  $heatCmd = Get-Command heat -ErrorAction SilentlyContinue
+  $heatCmd = Get-Command heat -ErrorAction SilentlyContinue | Select-Object -First 1
   if ($heatCmd) { $wix = Split-Path $heatCmd.Path -Parent }
 }
 
 if (-not $wix) {
   try {
     $found = Get-ChildItem -Path $pf86 -Recurse -Filter heat.exe -ErrorAction SilentlyContinue | Select-Object -First 1
-    if ($found) { $wix = Split-Path $found.FullName -Parent }
+    if ($found -and $found.FullName) { $wix = Split-Path $found.FullName -Parent }
   } catch { }
 }
 
