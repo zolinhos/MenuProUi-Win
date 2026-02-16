@@ -18,10 +18,31 @@ public static class AppPaths
     {
         get
         {
-            var baseDir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            var dir = Path.Combine(baseDir, "MenuProUI");
-            Directory.CreateDirectory(dir);
-            return dir;
+            var candidates = new[]
+            {
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                Path.GetTempPath()
+            };
+
+            foreach (var baseDir in candidates)
+            {
+                if (string.IsNullOrWhiteSpace(baseDir))
+                    continue;
+
+                try
+                {
+                    var dir = Path.Combine(baseDir, "MenuProUI");
+                    Directory.CreateDirectory(dir);
+                    return dir;
+                }
+                catch
+                {
+                    // tenta próximo caminho candidato
+                }
+            }
+
+            throw new InvalidOperationException("Não foi possível determinar/criar diretório de dados da aplicação.");
         }
     }
 

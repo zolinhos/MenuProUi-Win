@@ -76,123 +76,18 @@ jobs:
           Write-Host "Version: $version"
           "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
-      - name: Prepare MSI paths
-        id: msi_paths
-        shell: powershell
-        run: |
-          $root = $PWD
-          "root=$root" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          "publishDir=$(Join-Path $root 'publish\win-x64')" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          "msiPublishDir=$(Join-Path $root 'publish\win-x64-msi')" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          "distDir=$(Join-Path $root 'dist')" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          "objDir=$(Join-Path $root 'Installer\obj')" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          "productCi=$(Join-Path $root 'Installer\Product.ci.wxs')" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-
       - name: Publish win-x64
         shell: powershell
         run: |
-          $publishDir = '${{ steps.msi_paths.outputs.publishDir }}'
+          $publishDir = Join-Path $PWD 'publish\win-x64'
           New-Item -ItemType Directory -Path $publishDir -Force | Out-Null
           dotnet publish .\MenuProUI.csproj -c Release -r win-x64 --self-contained true -o $publishDir
 
-      - name: Publish win-x64 single-file for MSI
-        shell: powershell
-        run: |
-          $msiPublishDir = '${{ steps.msi_paths.outputs.msiPublishDir }}'
-          New-Item -ItemType Directory -Path $msiPublishDir -Force | Out-Null
-          dotnet publish .\MenuProUI.csproj -c Release -r win-x64 --self-contained true -o $msiPublishDir -p:PublishSingleFile=true -p:PublishTrimmed=false
-
-      - name: Prepare Product.ci.wxs
+      - name: Build MSI
         shell: powershell
         run: |
           $ver = '${{ steps.version.outputs.version }}'
-          $root = '${{ steps.msi_paths.outputs.root }}'
-          $msiPublishDir = '${{ steps.msi_paths.outputs.msiPublishDir }}'
-          $productCi = '${{ steps.msi_paths.outputs.productCi }}'
-
-          $exePath = Join-Path $msiPublishDir 'MenuProUI.exe'
-          $iconPath = Join-Path $root 'Assets\\menupro-ui.ico'
-          $readmePath = Join-Path $root 'Installer\\README-DEPENDENCIAS.txt'
-
-          if (-not (Test-Path $exePath)) { throw "Executável não encontrado: $exePath" }
-          if (-not (Test-Path $iconPath)) { throw "Ícone não encontrado: $iconPath" }
-          if (-not (Test-Path $readmePath)) { throw "README não encontrado: $readmePath" }
-
-          $productLines = @(
-            '<?xml version="1.0" encoding="UTF-8"?>',
-            '<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">',
-            '  <Product Id="*" Name="MenuProUI" Manufacturer="Solutions" Version="__VERSION__" Language="1046" UpgradeCode="B2D85E7B-5F4A-4D88-9B9D-9B4D02D6D2A1">',
-            '    <Package InstallerVersion="500" Compressed="yes" InstallScope="perUser" />',
-            '    <MajorUpgrade DowngradeErrorMessage="Uma versão mais nova do MenuProUI já está instalada." />',
-            '    <MediaTemplate EmbedCab="yes" />',
-            '    <Property Id="ARPPRODUCTICON" Value="MenuProUIIcon" />',
-            '    <Icon Id="MenuProUIIcon" SourceFile="__ICON__" />',
-            '    <Directory Id="TARGETDIR" Name="SourceDir">',
-            '      <Directory Id="DesktopFolder" />',
-            '      <Directory Id="LocalAppDataFolder">',
-            '        <Directory Id="INSTALLFOLDER" Name="MenuProUI" />',
-            '      </Directory>',
-            '      <Directory Id="ProgramMenuFolder">',
-            '        <Directory Id="ApplicationProgramsFolder" Name="MenuProUI" />',
-            '      </Directory>',
-            '    </Directory>',
-            '    <DirectoryRef Id="INSTALLFOLDER">',
-            '      <Component Id="MainExeComponent" Guid="*">',
-            '        <File Id="MainExe" Name="MenuProUI.exe" Source="__EXE__" KeyPath="yes" />',
-            '      </Component>',
-            '      <Component Id="Docs" Guid="*">',
-            '        <File Id="ReadmeDeps" Name="README-DEPENDENCIAS.txt" Source="__README__" KeyPath="yes" />',
-            '      </Component>',
-            '    </DirectoryRef>',
-            '    <DirectoryRef Id="ApplicationProgramsFolder">',
-            '      <Component Id="StartMenuShortcuts" Guid="*">',
-            '        <Shortcut Id="StartMenuShortcut" Name="MenuProUI" Description="Gerenciador de acessos (SSH/RDP/URL)" Target="[INSTALLFOLDER]MenuProUI.exe" WorkingDirectory="INSTALLFOLDER" Icon="MenuProUIIcon" />',
-            '        <RemoveFolder Id="RemoveStartMenuFolder" Directory="ApplicationProgramsFolder" On="uninstall" />',
-            '        <RegistryValue Root="HKCU" Key="Software\MenuProUI" Name="StartMenu" Type="integer" Value="1" KeyPath="yes" />',
-            '      </Component>',
-            '    </DirectoryRef>',
-            '    <DirectoryRef Id="DesktopFolder">',
-            '      <Component Id="DesktopShortcut" Guid="*">',
-            '        <Shortcut Id="DesktopShortcutFile" Name="MenuProUI" Target="[INSTALLFOLDER]MenuProUI.exe" WorkingDirectory="INSTALLFOLDER" Icon="MenuProUIIcon" />',
-            '        <RegistryValue Root="HKCU" Key="Software\MenuProUI" Name="Desktop" Type="integer" Value="1" KeyPath="yes" />',
-            '      </Component>',
-            '    </DirectoryRef>',
-            '    <Feature Id="MainFeature" Title="MenuProUI" Level="1">',
-            '      <ComponentRef Id="MainExeComponent" />',
-            '      <ComponentRef Id="Docs" />',
-            '      <ComponentRef Id="StartMenuShortcuts" />',
-            '      <ComponentRef Id="DesktopShortcut" />',
-            '    </Feature>',
-            '    <UIRef Id="WixUI_Minimal" />',
-            '    <UIRef Id="WixUI_ErrorProgressText" />',
-            '  </Product>',
-            '</Wix>'
-          )
-
-          $product = ($productLines -join "`n")
-          $product = $product.Replace('__VERSION__', $ver).Replace('__EXE__', $exePath).Replace('__ICON__', $iconPath).Replace('__README__', $readmePath)
-          Set-Content -Path $productCi -Value $product -Encoding UTF8
-
-      - name: Compile wix objects (candle)
-        shell: powershell
-        run: |
-          $objDir = '${{ steps.msi_paths.outputs.objDir }}'
-          $productCi = '${{ steps.msi_paths.outputs.productCi }}'
-
-          New-Item -ItemType Directory -Path $objDir -Force | Out-Null
-          candle -nologo -out (Join-Path $objDir '') $productCi
-
-      - name: Link MSI (light)
-        shell: powershell
-        run: |
-          $ver = '${{ steps.version.outputs.version }}'
-          $distDir = '${{ steps.msi_paths.outputs.distDir }}'
-          $objDir = '${{ steps.msi_paths.outputs.objDir }}'
-
-          New-Item -ItemType Directory -Path $distDir -Force | Out-Null
-          $msiOut = Join-Path $distDir ("MenuProUI-" + $ver + "-x64.msi")
-          light -nologo -sval -ext WixUIExtension -out $msiOut (Join-Path $objDir 'Product.ci.wixobj')
-          if (-not (Test-Path $msiOut)) { throw "MSI não foi gerado: $msiOut" }
+          .\Installer\build-msi.ps1 -Version $ver
 
       - name: Build ZIP dist
         shell: powershell

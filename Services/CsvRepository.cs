@@ -40,8 +40,8 @@ public sealed class CsvRepository
         }
 
         // Carrega clientes e acessos dos arquivos CSV
-        var clients = File.Exists(AppPaths.ClientsPath) ? LoadCsv<Client>(AppPaths.ClientsPath) : new List<Client>();
-        var accesses = File.Exists(AppPaths.AccessesPath) ? LoadCsv<AccessEntry>(AppPaths.AccessesPath) : new List<AccessEntry>();
+        var clients = SafeLoadCsv<Client>(AppPaths.ClientsPath);
+        var accesses = SafeLoadCsv<AccessEntry>(AppPaths.AccessesPath);
 
         // Garante sempre ter pelo menos um cliente padrão
         if (clients.Count == 0)
@@ -102,6 +102,32 @@ public sealed class CsvRepository
         using var reader = new StreamReader(path);
         using var csv = new CsvReader(reader, Cfg);
         return csv.GetRecords<T>().ToList();
+    }
+
+    private static List<T> SafeLoadCsv<T>(string path)
+    {
+        if (!File.Exists(path))
+            return new List<T>();
+
+        try
+        {
+            return LoadCsv<T>(path);
+        }
+        catch
+        {
+            try
+            {
+                var stamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss");
+                var corrupt = path + $".corrupt_{stamp}";
+                File.Move(path, corrupt, true);
+            }
+            catch
+            {
+                // sem impacto: retorna vazio mesmo se não conseguir backup
+            }
+
+            return new List<T>();
+        }
     }
 
     /// <summary>
