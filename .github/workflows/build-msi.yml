@@ -121,12 +121,12 @@ jobs:
           $productLines = @(
             '<?xml version="1.0" encoding="UTF-8"?>',
             '<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">',
-            "  <Product Id=\"*\" Name=\"MenuProUI\" Manufacturer=\"Solutions\" Version=\"$ver\" Language=\"1046\" UpgradeCode=\"B2D85E7B-5F4A-4D88-9B9D-9B4D02D6D2A1\">",
+            '  <Product Id="*" Name="MenuProUI" Manufacturer="Solutions" Version="__VERSION__" Language="1046" UpgradeCode="B2D85E7B-5F4A-4D88-9B9D-9B4D02D6D2A1">',
             '    <Package InstallerVersion="500" Compressed="yes" InstallScope="perUser" />',
             '    <MajorUpgrade DowngradeErrorMessage="Uma versão mais nova do MenuProUI já está instalada." />',
             '    <MediaTemplate EmbedCab="yes" />',
             '    <Property Id="ARPPRODUCTICON" Value="MenuProUIIcon" />',
-            "    <Icon Id=\"MenuProUIIcon\" SourceFile=\"$iconPath\" />",
+            '    <Icon Id="MenuProUIIcon" SourceFile="__ICON__" />',
             '    <Directory Id="TARGETDIR" Name="SourceDir">',
             '      <Directory Id="DesktopFolder" />',
             '      <Directory Id="LocalAppDataFolder">',
@@ -138,10 +138,10 @@ jobs:
             '    </Directory>',
             '    <DirectoryRef Id="INSTALLFOLDER">',
             '      <Component Id="MainExeComponent" Guid="*">',
-            "        <File Id=\"MainExe\" Name=\"MenuProUI.exe\" Source=\"$exePath\" KeyPath=\"yes\" />",
+            '        <File Id="MainExe" Name="MenuProUI.exe" Source="__EXE__" KeyPath="yes" />',
             '      </Component>',
             '      <Component Id="Docs" Guid="*">',
-            "        <File Id=\"ReadmeDeps\" Name=\"README-DEPENDENCIAS.txt\" Source=\"$readmePath\" KeyPath=\"yes\" />",
+            '        <File Id="ReadmeDeps" Name="README-DEPENDENCIAS.txt" Source="__README__" KeyPath="yes" />',
             '      </Component>',
             '    </DirectoryRef>',
             '    <DirectoryRef Id="ApplicationProgramsFolder">',
@@ -169,7 +169,9 @@ jobs:
             '</Wix>'
           )
 
-          Set-Content -Path $productCi -Value ($productLines -join "`n") -Encoding UTF8
+          $product = ($productLines -join "`n")
+          $product = $product.Replace('__VERSION__', $ver).Replace('__EXE__', $exePath).Replace('__ICON__', $iconPath).Replace('__README__', $readmePath)
+          Set-Content -Path $productCi -Value $product -Encoding UTF8
 
       - name: Compile wix objects (candle)
         shell: powershell
