@@ -1,26 +1,29 @@
-name: Build MSI
+name: Release Windows Dist
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Versão do MSI (ex: 1.0.1)'
+        description: 'Versão da release (ex: 1.0.4)'
         required: false
-        default: '1.0.1'
+        default: '1.0.4'
   push:
     tags:
       - 'v*.*.*'
 
+permissions:
+  contents: write
+
 jobs:
-  build:
+  build-dist:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '10.0.x'
 
       - name: Install WiX Toolset (Chocolatey)
         shell: powershell
@@ -32,17 +35,73 @@ jobs:
         run: |
           Get-Command heat,candle,light -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_.Path }
 
-      - name: Build MSI
+      - name: Resolve version
+        id: version
         shell: powershell
         run: |
-          $ver = '${{ github.event.inputs.version }}'
-          if ([string]::IsNullOrWhiteSpace($ver)) { $ver = '${{ github.ref_name }}'.TrimStart('v') }
-          if ([string]::IsNullOrWhiteSpace($ver)) { $ver = '1.0.1' }
-          Write-Host "Building MSI version: $ver"
-          .\Installer\build-msi.ps1 -Version $ver
+          $inputVersion = '${{ github.event.inputs.version }}'
+          $tagVersion = '${{ github.ref_name }}'.TrimStart('v')
+
+          if (-not [string]::IsNullOrWhiteSpace($inputVersion)) {
+            $version = $inputVersion
+          } elseif (-not [string]::IsNullOrWhiteSpace($tagVersion)) {
+            $version = $tagVersion
+          } else {
+            $version = '1.0.4'
+          }
+
+          Write-Host "Version: $version"
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Build dist (ZIP + MSI + checksums)
+        shell: powershell
+        run: |
+          $ver = '${{ steps.version.outputs.version }}'
+          Write-Host "Building dist version: $ver"
+          .\build-dist-win.ps1 -Version $ver -Runtime win-x64 -BuildInstaller
+
+      - name: Generate release notes
+        shell: powershell
+        run: |
+          $ver = '${{ steps.version.outputs.version }}'
+          $tag = "v$ver"
+          $notes = @"
+MenuProUI-Win $ver
+
+## Arquivos
+- MenuProUI-$ver-win-x64.zip
+- MenuProUI-$ver-x64.msi
+- SHA256SUMS
+- SHA512SUMS
+
+## Instalação
+1. Baixe e execute o instalador MSI.
+2. Alternativa: use o ZIP portável e execute MenuProUI.exe.
+
+## Integridade
+Valide os hashes com os arquivos SHA256SUMS/SHA512SUMS incluídos.
+"@
+          $notesPath = "dist/release_notes_$tag.md"
+          $notes | Set-Content -Path $notesPath -Encoding UTF8
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: msi
-          path: Installer\dist\*.msi
+          name: windows-dist-${{ steps.version.outputs.version }}
+          path: |
+            dist\*.zip
+            dist\*.msi
+            dist\SHA256SUMS
+            dist\SHA512SUMS
+            dist\release_notes_*.md
+
+      - name: Publish GitHub Release assets
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: dist/release_notes_${{ github.ref_name }}.md
+          files: |
+            dist/*.zip
+            dist/*.msi
+            dist/SHA256SUMS
+            dist/SHA512SUMS
