@@ -43,6 +43,9 @@ public partial class MainWindowViewModel : ObservableObject
     /// <summary>Texto de busca para filtrar acessos em tempo real</summary>
     [ObservableProperty] private string _accessesSearchText = "";
 
+    /// <summary>Texto exibido na UI com data/hora da última checagem de conectividade</summary>
+    [ObservableProperty] private string _lastConnectivityCheckText = "Não checado";
+
     /// <summary>Caminho do arquivo CSV de clientes</summary>
     public string ClientsPath => AppPaths.ClientsPath;
     

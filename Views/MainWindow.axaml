@@ -116,9 +116,10 @@
       <Grid RowDefinitions="Auto,Auto,Auto,*" RowSpacing="10">
 
         <!-- Header with counter -->
-        <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
           <TextBlock Text="Acessos" FontSize="18"/>
           <TextBlock Grid.Column="1" Text="{Binding AccessesCountDisplay, StringFormat={}{0} acessos}" Opacity="0.7" VerticalAlignment="Center"/>
+          <TextBlock Grid.Column="2" Text="{Binding LastConnectivityCheckText, StringFormat={}Última checagem: {0}}" Opacity="0.7" VerticalAlignment="Center" FontSize="12"/>
         </Grid>
 
         <!-- Search box for accesses -->

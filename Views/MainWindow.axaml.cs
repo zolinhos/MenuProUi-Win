@@ -171,6 +171,14 @@ public partial class MainWindow : Window
                 return;
             }
 
+            // Ctrl+Shift+D - Clonar Acesso
+            if (hasCtrl && hasShift && e.Key == Key.D)
+            {
+                e.Handled = true;
+                OnCloneAccess(null, new RoutedEventArgs());
+                return;
+            }
+
             // Ctrl+Shift+K - Checar conectividade
             if (hasCtrl && hasShift && e.Key == Key.K)
             {
@@ -240,6 +248,7 @@ Clientes:
 
 Acessos:
   Ctrl+Shift+N          Novo acesso
+    Ctrl+Shift+D          Clonar acesso selecionado
   Ctrl+Shift+E          Editar acesso selecionado
   Ctrl+Shift+Delete     Excluir acesso selecionado
     Ctrl+Shift+K          Checar conectividade
@@ -605,6 +614,8 @@ Versão 1.0.4 - MenuProUI";
         var results = await ConnectivityChecker.CheckAllAsync(accesses);
         foreach (var pair in results)
             _connectivityByAccess[pair.Key] = pair.Value ? ConnectivityStatus.Online : ConnectivityStatus.Offline;
+
+        VM.LastConnectivityCheckText = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
 
         ApplyConnectivityToVisibleAccesses();
         ApplyClientConnectivityIndicators();
