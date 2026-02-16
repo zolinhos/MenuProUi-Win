@@ -91,26 +91,25 @@ jobs:
             .\Installer\build-msi.ps1 -Version $ver
           }
           catch {
-            Write-Host "Fallback: build-msi.ps1 falhou, gerando MSI simplificado..."
+            Write-Host "Fallback: build-msi.ps1 falhou, gerando MSI com todos os arquivos publicados..."
             Write-Host $_
 
             $root = $PWD
+            $publishDir = Join-Path $root 'publish\win-x64'
             $distDir = Join-Path $root 'dist'
             $objDir = Join-Path $root 'Installer\obj'
-            $msiPublishDir = Join-Path $root 'publish\win-x64-msi'
+            $appFiles = Join-Path $root 'Installer\AppFiles.fallback.wxs'
             $productCi = Join-Path $root 'Installer\Product.ci.wxs'
+            $iconPath = Join-Path $root 'Assets\menupro-ui.ico'
 
             New-Item -ItemType Directory -Path $distDir -Force | Out-Null
             New-Item -ItemType Directory -Path $objDir -Force | Out-Null
-            New-Item -ItemType Directory -Path $msiPublishDir -Force | Out-Null
 
-            dotnet publish .\MenuProUI.csproj -c Release -r win-x64 --self-contained true -o $msiPublishDir -p:PublishSingleFile=true -p:PublishTrimmed=false
+            if (-not (Test-Path (Join-Path $publishDir 'MenuProUI.exe'))) {
+              throw "Publish incompleto: MenuProUI.exe não encontrado em $publishDir"
+            }
 
-            $exePath = Join-Path $msiPublishDir 'MenuProUI.exe'
-            $iconPath = Join-Path $root 'Assets\menupro-ui.ico'
-            $readmePath = Join-Path $root 'Installer\README-DEPENDENCIAS.txt'
-
-            if (-not (Test-Path $exePath)) { throw "Executável não encontrado: $exePath" }
+            heat dir $publishDir -gg -cg AppFiles -dr INSTALLFOLDER -srd -scom -sreg -var var.SourceDir -out $appFiles
 
             $productLines = @(
               '<?xml version="1.0" encoding="UTF-8"?>',
@@ -130,14 +129,11 @@ jobs:
               '        <Directory Id="ApplicationProgramsFolder" Name="MenuProUI" />',
               '      </Directory>',
               '    </Directory>',
-              '    <DirectoryRef Id="INSTALLFOLDER">',
-              '      <Component Id="MainExeComponent" Guid="*">',
-              '        <File Id="MainExe" Name="MenuProUI.exe" Source="__EXE__" KeyPath="yes" />',
-              '      </Component>',
-              '      <Component Id="Docs" Guid="*">',
-              '        <File Id="ReadmeDeps" Name="README-DEPENDENCIAS.txt" Source="__README__" KeyPath="yes" />',
-              '      </Component>',
-              '    </DirectoryRef>',
+              '    <Feature Id="MainFeature" Title="MenuProUI" Level="1">',
+              '      <ComponentGroupRef Id="AppFiles" />',
+              '      <ComponentRef Id="StartMenuShortcuts" />',
+              '      <ComponentRef Id="DesktopShortcut" />',
+              '    </Feature>',
               '    <DirectoryRef Id="ApplicationProgramsFolder">',
               '      <Component Id="StartMenuShortcuts" Guid="*">',
               '        <Shortcut Id="StartMenuShortcut" Name="MenuProUI" Description="Gerenciador de acessos (SSH/RDP/URL)" Target="[INSTALLFOLDER]MenuProUI.exe" WorkingDirectory="INSTALLFOLDER" Icon="MenuProUIIcon" />',
@@ -151,12 +147,6 @@ jobs:
               '        <RegistryValue Root="HKCU" Key="Software\MenuProUI" Name="Desktop" Type="integer" Value="1" KeyPath="yes" />',
               '      </Component>',
               '    </DirectoryRef>',
-              '    <Feature Id="MainFeature" Title="MenuProUI" Level="1">',
-              '      <ComponentRef Id="MainExeComponent" />',
-              '      <ComponentRef Id="Docs" />',
-              '      <ComponentRef Id="StartMenuShortcuts" />',
-              '      <ComponentRef Id="DesktopShortcut" />',
-              '    </Feature>',
               '    <UIRef Id="WixUI_Minimal" />',
               '    <UIRef Id="WixUI_ErrorProgressText" />',
               '  </Product>',
@@ -164,13 +154,13 @@ jobs:
             )
 
             $product = ($productLines -join "`n")
-            $product = $product.Replace('__VERSION__', $ver).Replace('__EXE__', $exePath).Replace('__ICON__', $iconPath).Replace('__README__', $readmePath)
+            $product = $product.Replace('__VERSION__', $ver).Replace('__ICON__', $iconPath)
             Set-Content -Path $productCi -Value $product -Encoding UTF8
 
-            candle -nologo -out (Join-Path $objDir '') $productCi
+            candle -nologo -dSourceDir=$publishDir -out (Join-Path $objDir '') $productCi $appFiles
 
             $msiOut = Join-Path $distDir ("MenuProUI-" + $ver + "-x64.msi")
-            light -nologo -sval -ext WixUIExtension -out $msiOut (Join-Path $objDir 'Product.ci.wixobj')
+            light -nologo -sval -ext WixUIExtension -ext WixUtilExtension -out $msiOut (Join-Path $objDir 'Product.ci.wixobj') (Join-Path $objDir 'AppFiles.fallback.wixobj')
 
             if (-not (Test-Path $msiOut)) { throw "MSI fallback não foi gerado: $msiOut" }
           }
