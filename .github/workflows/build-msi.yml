@@ -76,29 +76,40 @@ jobs:
           Write-Host "Version: $version"
           "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
-      - name: Build MSI
+      - name: Prepare MSI paths
+        id: msi_paths
+        shell: powershell
+        run: |
+          $root = $PWD
+          "root=$root" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "publishDir=$(Join-Path $root 'publish\win-x64')" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "distDir=$(Join-Path $root 'dist')" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "objDir=$(Join-Path $root 'Installer\obj')" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "appFiles=$(Join-Path $root 'Installer\AppFiles.wxs')" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "productTemplate=$(Join-Path $root 'Installer\Product.wxs')" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "productCi=$(Join-Path $root 'Installer\Product.ci.wxs')" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Publish win-x64
+        shell: powershell
+        run: |
+          $publishDir = '${{ steps.msi_paths.outputs.publishDir }}'
+          New-Item -ItemType Directory -Path $publishDir -Force | Out-Null
+          dotnet publish .\MenuProUI.csproj -c Release -r win-x64 --self-contained true -o $publishDir
+
+      - name: Harvest files (heat)
+        shell: powershell
+        run: |
+          $publishDir = '${{ steps.msi_paths.outputs.publishDir }}'
+          $appFiles = '${{ steps.msi_paths.outputs.appFiles }}'
+          heat dir $publishDir -gg -cg AppFiles -dr INSTALLFOLDER -srd -scom -sreg -var var.SourceDir -out $appFiles
+
+      - name: Prepare Product.ci.wxs
         shell: powershell
         run: |
           $ver = '${{ steps.version.outputs.version }}'
-          $root = $PWD
-          $publishDir = Join-Path $root 'publish\win-x64'
-          $distDir = Join-Path $root 'dist'
-          $objDir = Join-Path $root 'Installer\obj'
-          $appFiles = Join-Path $root 'Installer\AppFiles.wxs'
-          $productTemplate = Join-Path $root 'Installer\Product.wxs'
-          $productCi = Join-Path $root 'Installer\Product.ci.wxs'
-
-          New-Item -ItemType Directory -Path $publishDir -Force | Out-Null
-          New-Item -ItemType Directory -Path $distDir -Force | Out-Null
-          New-Item -ItemType Directory -Path $objDir -Force | Out-Null
-
-          Write-Host "Publishing win-x64..."
-          dotnet publish .\MenuProUI.csproj -c Release -r win-x64 --self-contained true -o $publishDir
-          if ($LASTEXITCODE -ne 0) { throw "dotnet publish falhou" }
-
-          Write-Host "Harvesting files with heat..."
-          heat dir $publishDir -gg -cg AppFiles -dr INSTALLFOLDER -srd -scom -sreg -var var.SourceDir -out $appFiles
-          if ($LASTEXITCODE -ne 0) { throw "heat falhou" }
+          $root = '${{ steps.msi_paths.outputs.root }}'
+          $productTemplate = '${{ steps.msi_paths.outputs.productTemplate }}'
+          $productCi = '${{ steps.msi_paths.outputs.productCi }}'
 
           if (-not (Test-Path $productTemplate)) { throw "Template Product.wxs não encontrado" }
           $product = Get-Content -Path $productTemplate -Raw
@@ -107,16 +118,28 @@ jobs:
           $product = $product.Replace('Source="README-DEPENDENCIAS.txt"', ('Source="' + (Join-Path $root 'Installer\\README-DEPENDENCIAS.txt') + '"'))
           Set-Content -Path $productCi -Value $product -Encoding UTF8
 
-          Write-Host "Compiling wix objects with candle..."
+      - name: Compile wix objects (candle)
+        shell: powershell
+        run: |
+          $publishDir = '${{ steps.msi_paths.outputs.publishDir }}'
+          $objDir = '${{ steps.msi_paths.outputs.objDir }}'
+          $productCi = '${{ steps.msi_paths.outputs.productCi }}'
+          $appFiles = '${{ steps.msi_paths.outputs.appFiles }}'
+
+          New-Item -ItemType Directory -Path $objDir -Force | Out-Null
           candle -nologo -dSourceDir=$publishDir -out (Join-Path $objDir '') $productCi $appFiles
-          if ($LASTEXITCODE -ne 0) { throw "candle falhou" }
 
+      - name: Link MSI (light)
+        shell: powershell
+        run: |
+          $ver = '${{ steps.version.outputs.version }}'
+          $distDir = '${{ steps.msi_paths.outputs.distDir }}'
+          $objDir = '${{ steps.msi_paths.outputs.objDir }}'
+
+          New-Item -ItemType Directory -Path $distDir -Force | Out-Null
           $msiOut = Join-Path $distDir ("MenuProUI-" + $ver + "-x64.msi")
-          Write-Host "Linking MSI with light..."
           light -nologo -sval -ext WixUIExtension -ext WixUtilExtension -out $msiOut (Join-Path $objDir 'Product.ci.wixobj') (Join-Path $objDir 'AppFiles.wixobj')
-          if ($LASTEXITCODE -ne 0) { throw "light falhou" }
-
-          Write-Host "MSI criado em $msiOut"
+          if (-not (Test-Path $msiOut)) { throw "MSI não foi gerado: $msiOut" }
 
       - name: Build ZIP dist
         shell: powershell
