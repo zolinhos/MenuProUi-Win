@@ -103,6 +103,8 @@ jobs:
           if (-not (Test-Path $productTemplate)) { throw "Template Product.wxs não encontrado" }
           $product = Get-Content -Path $productTemplate -Raw
           $product = $product.Replace('__VERSION__', $ver)
+          $product = $product.Replace('..\\Assets\\menupro-ui.ico', (Join-Path $root 'Assets\\menupro-ui.ico'))
+          $product = $product.Replace('Source="README-DEPENDENCIAS.txt"', ('Source="' + (Join-Path $root 'Installer\\README-DEPENDENCIAS.txt') + '"'))
           Set-Content -Path $productCi -Value $product -Encoding UTF8
 
           Write-Host "Compiling wix objects with candle..."
