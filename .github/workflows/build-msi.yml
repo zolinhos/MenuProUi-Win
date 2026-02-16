@@ -80,8 +80,41 @@ jobs:
         shell: powershell
         run: |
           $ver = '${{ steps.version.outputs.version }}'
-          Write-Host "Building MSI version: $ver"
-          .\Installer\build-msi.ps1 -Version $ver
+          $root = $PWD
+          $publishDir = Join-Path $root 'publish\win-x64'
+          $distDir = Join-Path $root 'dist'
+          $objDir = Join-Path $root 'Installer\obj'
+          $appFiles = Join-Path $root 'Installer\AppFiles.wxs'
+          $productTemplate = Join-Path $root 'Installer\Product.wxs'
+          $productCi = Join-Path $root 'Installer\Product.ci.wxs'
+
+          New-Item -ItemType Directory -Path $publishDir -Force | Out-Null
+          New-Item -ItemType Directory -Path $distDir -Force | Out-Null
+          New-Item -ItemType Directory -Path $objDir -Force | Out-Null
+
+          Write-Host "Publishing win-x64..."
+          dotnet publish .\MenuProUI.csproj -c Release -r win-x64 --self-contained true -o $publishDir
+          if ($LASTEXITCODE -ne 0) { throw "dotnet publish falhou" }
+
+          Write-Host "Harvesting files with heat..."
+          heat dir $publishDir -gg -cg AppFiles -dr INSTALLFOLDER -srd -scom -sreg -var var.SourceDir -out $appFiles
+          if ($LASTEXITCODE -ne 0) { throw "heat falhou" }
+
+          if (-not (Test-Path $productTemplate)) { throw "Template Product.wxs não encontrado" }
+          $product = Get-Content -Path $productTemplate -Raw
+          $product = $product.Replace('__VERSION__', $ver)
+          Set-Content -Path $productCi -Value $product -Encoding UTF8
+
+          Write-Host "Compiling wix objects with candle..."
+          candle -nologo -dSourceDir=$publishDir -out (Join-Path $objDir '') $productCi $appFiles
+          if ($LASTEXITCODE -ne 0) { throw "candle falhou" }
+
+          $msiOut = Join-Path $distDir ("MenuProUI-" + $ver + "-x64.msi")
+          Write-Host "Linking MSI with light..."
+          light -nologo -ext WixUIExtension -ext WixUtilExtension -out $msiOut (Join-Path $objDir 'Product.ci.wixobj') (Join-Path $objDir 'AppFiles.wixobj')
+          if ($LASTEXITCODE -ne 0) { throw "light falhou" }
+
+          Write-Host "MSI criado em $msiOut"
 
       - name: Build ZIP dist
         shell: powershell
