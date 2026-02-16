@@ -30,10 +30,33 @@ jobs:
         run: |
           choco install wixtoolset -y
 
+      - name: Ensure WiX on PATH
+        shell: powershell
+        run: |
+          $candidates = @(
+            "$env:ProgramFiles(x86)\WiX Toolset v3.14\bin",
+            "$env:ProgramFiles(x86)\WiX Toolset v3.11\bin",
+            "C:\ProgramData\chocolatey\lib\wixtoolset\tools",
+            "C:\ProgramData\chocolatey\bin"
+          )
+
+          foreach ($path in $candidates) {
+            if (Test-Path $path) {
+              Write-Host "Adding to PATH: $path"
+              $path | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+            }
+          }
+
       - name: Show WiX tools
         shell: powershell
         run: |
-          Get-Command heat,candle,light -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_.Path }
+          $tools = Get-Command heat,candle,light -ErrorAction SilentlyContinue
+          if (-not $tools -or $tools.Count -lt 3) {
+            Write-Host "WiX tools not found on PATH"
+            Write-Host "Current PATH: $env:PATH"
+            throw "heat/candle/light não encontrados"
+          }
+          $tools | ForEach-Object { Write-Host $_.Path }
 
       - name: Resolve version
         id: version
