@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-  <Product Id="*" Name="MenuProUI" Language="1046" Version="1.0.1"
+  <Product Id="*" Name="MenuProUI" Language="1046" Version="1.7.3"
            Manufacturer="Solutions" UpgradeCode="b2d85e7b-5f4a-4d88-9b9d-9b4d02d6d2a1">
 
     <Package InstallerVersion="500" Compressed="yes" InstallScope="perUser" />

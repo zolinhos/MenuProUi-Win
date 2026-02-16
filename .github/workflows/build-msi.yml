@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Versão da release (ex: 1.0.4)'
+        description: 'Versão da release (ex: 1.7.3)'
         required: false
-        default: '1.0.4'
+        default: '1.7.3'
   push:
     tags:
       - 'v*.*.*'
@@ -47,7 +47,7 @@ jobs:
           } elseif (-not [string]::IsNullOrWhiteSpace($tagVersion)) {
             $version = $tagVersion
           } else {
-            $version = '1.0.4'
+            $version = '1.7.3'
           }
 
           Write-Host "Version: $version"

@@ -1,24 +1,4 @@
-# MenuProUI v1.0.4
-
-MenuProUI é um gerenciador de acessos (SSH, RDP e URLs) organizado por clientes.
-
-## Funcionalidades
-
-- ✨ Gerenciamento de clientes e acessos com interface intuitiva
-- 🔍 Busca em tempo real para clientes e acessos
-- ⌨️ 15 atalhos de teclado para máxima produtividade
-- 💾 Persistência de dados em CSV (fácil backup e migração)
-- 🚀 Lançamento direto de SSH, RDP e URLs
-- 📚 Sistema de ajuda integrado (F1)
-- 🔗 Links para GitHub e suporte
-
-Resumo rápido
--------------
-
-- Executável principal: `MenuProUI` (publicado em `/opt/menuproui` quando empacotado).
-- Wrapper: `/usr/bin/menuproui` (criado pelo pacote `.deb`).
-- Dados do usuário: diretório de aplicação (`AppPaths.AppDir`) — por exemplo `~/.config/MenuProUI`.
-# MenuProUI v1.0.4
+# MenuProUI v1.7.3
 
 MenuProUI é um gerenciador de acessos (SSH, RDP e URLs) organizado por clientes, desenvolvido em .NET + Avalonia e multiplataforma.
 
@@ -90,13 +70,13 @@ Para gerar artefatos de distribuição no diretório `dist` (ZIP + checksums e M
 Windows (PowerShell):
 
 ```powershell
-./build-dist-win.ps1 -Version 1.0.4
+./build-dist-win.ps1 -Version 1.7.3
 ```
 
 macOS/Linux (bash, gera ZIP/checksums e tenta MSI via `pwsh` se houver):
 
 ```bash
-./build-dist-win.sh 1.0.4
+./build-dist-win.sh 1.7.3
 ```
 
 Arquivos esperados em `dist/`:
@@ -109,7 +89,7 @@ Instalação
 ---------
 - Linux (.deb):
 	```bash
-	sudo dpkg -i menupro-ui_1.0.4_amd64.deb
+	sudo dpkg -i menupro-ui_1.7.3_amd64.deb
 	sudo apt-get install -f
 	```
 - Windows (ZIP): extraia `publish\\win-x64` e execute `MenuProUI.exe`.
@@ -132,4 +112,4 @@ Abra issues e PRs no repositório para melhorias no empacotamento, traduções o
 
 Changelog
 ---------
-Versão atual: `v1.0.4`
+Versão atual: `v1.7.3`

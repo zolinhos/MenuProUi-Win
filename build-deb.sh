@@ -3,7 +3,7 @@ set -euo pipefail
 
 APP_NAME="MenuProUI"
 PKG_NAME="menupro-ui"
-VERSION="1.0.3"
+VERSION="1.7.3"
 ARCH="amd64"
 
 RUNTIME="linux-x64"
