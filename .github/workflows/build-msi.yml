@@ -53,12 +53,46 @@ jobs:
           Write-Host "Version: $version"
           "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
-      - name: Build dist (ZIP + MSI + checksums)
+      - name: Build MSI
         shell: powershell
         run: |
           $ver = '${{ steps.version.outputs.version }}'
-          Write-Host "Building dist version: $ver"
-          .\build-dist-win.ps1 -Version $ver -Runtime win-x64 -BuildInstaller
+          Write-Host "Building MSI version: $ver"
+          .\Installer\build-msi.ps1 -Version $ver
+
+      - name: Build ZIP dist
+        shell: powershell
+        run: |
+          $ver = '${{ steps.version.outputs.version }}'
+          $distDir = Join-Path $PWD 'dist'
+          $publishDir = Join-Path $PWD 'publish\win-x64'
+          $zipOut = Join-Path $distDir ("MenuProUI-" + $ver + "-win-x64.zip")
+
+          New-Item -ItemType Directory -Path $distDir -Force | Out-Null
+          if (Test-Path $zipOut) { Remove-Item $zipOut -Force }
+          Compress-Archive -Path (Join-Path $publishDir '*') -DestinationPath $zipOut -Force
+
+      - name: Build checksums
+        shell: powershell
+        run: |
+          $distDir = Join-Path $PWD 'dist'
+          $artifacts = Get-ChildItem -Path $distDir -File | Where-Object {
+            $_.Extension -in '.zip', '.msi'
+          } | Sort-Object Name
+
+          $sha256Lines = @()
+          $sha512Lines = @()
+
+          foreach ($artifact in $artifacts) {
+            $h256 = Get-FileHash -Path $artifact.FullName -Algorithm SHA256
+            $h512 = Get-FileHash -Path $artifact.FullName -Algorithm SHA512
+
+            $sha256Lines += ("{0}  {1}" -f $h256.Hash.ToLowerInvariant(), $artifact.Name)
+            $sha512Lines += ("{0}  {1}" -f $h512.Hash.ToLowerInvariant(), $artifact.Name)
+          }
+
+          Set-Content -Path (Join-Path $distDir 'SHA256SUMS') -Value $sha256Lines -Encoding UTF8
+          Set-Content -Path (Join-Path $distDir 'SHA512SUMS') -Value $sha512Lines -Encoding UTF8
 
       - name: Generate release notes
         shell: powershell
