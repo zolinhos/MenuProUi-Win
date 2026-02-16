@@ -65,22 +65,22 @@ jobs:
         run: |
           $ver = '${{ steps.version.outputs.version }}'
           $tag = "v$ver"
-          $notes = @"
-MenuProUI-Win $ver
-
-## Arquivos
-- MenuProUI-$ver-win-x64.zip
-- MenuProUI-$ver-x64.msi
-- SHA256SUMS
-- SHA512SUMS
-
-## Instalação
-1. Baixe e execute o instalador MSI.
-2. Alternativa: use o ZIP portável e execute MenuProUI.exe.
-
-## Integridade
-Valide os hashes com os arquivos SHA256SUMS/SHA512SUMS incluídos.
-"@
+          $notes = @(
+            "MenuProUI-Win $ver",
+            "",
+            "## Arquivos",
+            "- MenuProUI-$ver-win-x64.zip",
+            "- MenuProUI-$ver-x64.msi",
+            "- SHA256SUMS",
+            "- SHA512SUMS",
+            "",
+            "## Instalação",
+            "1. Baixe e execute o instalador MSI.",
+            "2. Alternativa: use o ZIP portável e execute MenuProUI.exe.",
+            "",
+            "## Integridade",
+            "Valide os hashes com os arquivos SHA256SUMS/SHA512SUMS incluídos."
+          ) -join "`n"
           $notesPath = "dist/release_notes_$tag.md"
           $notes | Set-Content -Path $notesPath -Encoding UTF8
 
