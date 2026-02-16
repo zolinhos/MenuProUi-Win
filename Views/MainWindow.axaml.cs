@@ -329,8 +329,6 @@ Versão 1.7.3 - MenuProUI";
     private void OnClientSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         VM.SetSelectedClient(VM.SelectedClient);
-        ApplyConnectivityToVisibleAccesses();
-        ApplyClientConnectivityIndicators();
     }
 
     /// <summary>
@@ -341,8 +339,6 @@ Versão 1.7.3 - MenuProUI";
     {
         CloseMenus();
         VM.Reload();
-        ApplyConnectivityToVisibleAccesses();
-        ApplyClientConnectivityIndicators();
     }
 
     // ============== HANDLERS DE CLIENTES ==============

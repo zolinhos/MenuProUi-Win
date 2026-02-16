@@ -31,6 +31,8 @@ Thumbs.db
 menupro-ui_*/
 publish/
 dist/
+Installer/AppFiles.wxs
+Installer/Product.gen.wxs
 
 # Local user files
 .config/
