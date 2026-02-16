@@ -1,4 +1,5 @@
 using System;
+using CsvHelper.Configuration.Attributes;
 
 namespace MenuProUI.Models;
 
@@ -25,4 +26,16 @@ public class Client
 
     /// <summary>Retorna o nome do cliente como representação em string</summary>
     public override string ToString() => Nome;
+
+    [Ignore]
+    public ConnectivityStatus ConnectivityStatus { get; set; } = ConnectivityStatus.Unknown;
+
+    [Ignore]
+    public string ConnectivityStatusIcon => ConnectivityStatus switch
+    {
+        ConnectivityStatus.Online => "🟢",
+        ConnectivityStatus.Offline => "🔴",
+        ConnectivityStatus.Checking => "🟡",
+        _ => "⚪"
+    };
 }

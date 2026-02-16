@@ -25,6 +25,8 @@ MenuProUI é um gerenciador de acessos (SSH, RDP e URLs) organizado por clientes
 Funcionalidades
 ----------------
 - Gerenciamento de clientes e seus acessos (SSH, RDP, URLs)
+- Clonagem rápida de acesso (gera apelido `-copia` automaticamente)
+- Checagem manual de conectividade TCP por cliente ou para todos os clientes
 - Busca em tempo real, atalhos de teclado e persistência em CSV
 - Publicação desktop para Linux e Windows (artifacts em `publish/`)
 
@@ -92,7 +94,7 @@ Instalação
 
 Atalhos de teclado
 ------------------
-(Principais) F1 = Ajuda, Esc = Fechar, Ctrl+Q = Sair, Ctrl+R = Recarregar, Enter = Lançar acesso.
+(Principais) F1 = Ajuda, Esc = Fechar, Ctrl+Q = Sair, Ctrl+R = Recarregar, Enter = Lançar acesso, Ctrl+Shift+K = Checar conectividade.
 
 Documentação
 -------------

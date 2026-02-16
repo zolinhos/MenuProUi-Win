@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
@@ -21,6 +22,8 @@ public partial class MainWindow : Window
 {
     /// <summary>Atalho para acessar o ViewModel (DataContext da janela)</summary>
     private MainWindowViewModel VM => (MainWindowViewModel)DataContext!;
+    private readonly CsvRepository _repo = new();
+    private readonly Dictionary<Guid, ConnectivityStatus> _connectivityByAccess = new();
 
     /// <summary>
     /// Inicializa a janela principal.
@@ -168,6 +171,14 @@ public partial class MainWindow : Window
                 return;
             }
 
+            // Ctrl+Shift+K - Checar conectividade
+            if (hasCtrl && hasShift && e.Key == Key.K)
+            {
+                e.Handled = true;
+                OnCheckConnectivity(null, new RoutedEventArgs());
+                return;
+            }
+
             // Enter - Abrir Acesso
             if (e.Key == Key.Return)
             {
@@ -207,9 +218,11 @@ FUNCIONALIDADES PRINCIPAIS:
 🔓 ACESSOS
   • Novo: Cria acesso (SSH, RDP ou URL) para cliente
   • Editar: Modifica configurações do acesso
+    • Clonar: Duplica o acesso selecionado com novo apelido
   • Excluir: Remove o acesso
   • Abrir: Abre/conecta ao acesso
   • Buscar: Filtra por apelido, host, usuário ou URL
+    • Checar Conectividade: Testa portas TCP e mostra status
 
 ⌨️ ATALHOS DE TECLADO:
 
@@ -229,6 +242,7 @@ Acessos:
   Ctrl+Shift+N          Novo acesso
   Ctrl+Shift+E          Editar acesso selecionado
   Ctrl+Shift+Delete     Excluir acesso selecionado
+    Ctrl+Shift+K          Checar conectividade
   Enter                 Abre/conecta ao acesso selecionado
   Ctrl+Shift+F          Focar campo de busca de acessos
 
@@ -306,6 +320,8 @@ Versão 1.0.4 - MenuProUI";
     private void OnClientSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         VM.SetSelectedClient(VM.SelectedClient);
+        ApplyConnectivityToVisibleAccesses();
+        ApplyClientConnectivityIndicators();
     }
 
     /// <summary>
@@ -316,6 +332,8 @@ Versão 1.0.4 - MenuProUI";
     {
         CloseMenus();
         VM.Reload();
+        ApplyConnectivityToVisibleAccesses();
+        ApplyClientConnectivityIndicators();
     }
 
     // ============== HANDLERS DE CLIENTES ==============
@@ -447,6 +465,42 @@ Versão 1.0.4 - MenuProUI";
         VM.SaveAll();
         VM.RefreshAccesses();
         VM.SelectedAccess = created;
+        ApplyConnectivityToVisibleAccesses();
+    }
+
+    private void OnCloneAccess(object? sender, RoutedEventArgs e)
+    {
+        CloseMenus();
+        if (VM.SelectedAccess is null) return;
+
+        var source = VM.SelectedAccess;
+        var clone = new AccessEntry
+        {
+            Id = Guid.NewGuid(),
+            ClientId = source.ClientId,
+            Tipo = source.Tipo,
+            Apelido = BuildCloneAlias(source.Apelido),
+            Host = source.Host,
+            Porta = source.Porta,
+            Usuario = source.Usuario,
+            Dominio = source.Dominio,
+            RdpIgnoreCert = source.RdpIgnoreCert,
+            RdpFullScreen = source.RdpFullScreen,
+            RdpDynamicResolution = source.RdpDynamicResolution,
+            RdpWidth = source.RdpWidth,
+            RdpHeight = source.RdpHeight,
+            Url = source.Url,
+            Observacoes = source.Observacoes,
+            CriadoEm = DateTime.UtcNow,
+            AtualizadoEm = DateTime.UtcNow,
+            ConnectivityStatus = ConnectivityStatus.Unknown
+        };
+
+        VM.Accesses.Add(clone);
+        VM.SaveAll();
+        VM.RefreshAccesses();
+        VM.SelectedAccess = VM.Accesses.FirstOrDefault(a => a.Id == clone.Id) ?? clone;
+        ApplyConnectivityToVisibleAccesses();
     }
 
     /// <summary>
@@ -495,8 +549,132 @@ Versão 1.0.4 - MenuProUI";
         if (!ok) return;
 
         VM.Accesses.Remove(a);
+        _connectivityByAccess.Remove(a.Id);
         VM.SaveAll();
         VM.RefreshAccesses();
+        ApplyConnectivityToVisibleAccesses();
+        ApplyClientConnectivityIndicators();
+    }
+
+    private async void OnCheckConnectivity(object? sender, RoutedEventArgs e)
+    {
+        CloseMenus();
+
+        if (VM.SelectedClient is null)
+        {
+            await new ConfirmDialog("Selecione um cliente para checar conectividade.", "Atenção")
+                .ShowDialog<bool>(this);
+            return;
+        }
+
+        var scope = new ConnectivityScopeDialog();
+        var mode = await scope.ShowDialog<ConnectivityScopeMode>(this);
+        if (mode == ConnectivityScopeMode.Cancel) return;
+
+        if (mode == ConnectivityScopeMode.SelectedClient)
+        {
+            await PerformConnectivityCheck(VM.Accesses.ToList(), onlySelectedClient: true);
+            return;
+        }
+
+        var allAccesses = _repo.Load().accesses;
+        await PerformConnectivityCheck(allAccesses, onlySelectedClient: false);
+    }
+
+    private async Task PerformConnectivityCheck(List<AccessEntry> accesses, bool onlySelectedClient)
+    {
+        if (accesses.Count == 0)
+        {
+            await new ConfirmDialog("Nenhum acesso disponível para checar.", "Conectividade")
+                .ShowDialog<bool>(this);
+            return;
+        }
+
+        foreach (var access in accesses)
+            _connectivityByAccess[access.Id] = ConnectivityStatus.Checking;
+
+        if (onlySelectedClient && VM.SelectedClient is not null)
+            VM.SelectedClient.ConnectivityStatus = ConnectivityStatus.Checking;
+        else
+            foreach (var client in VM.Clients)
+                client.ConnectivityStatus = ConnectivityStatus.Checking;
+
+        ApplyConnectivityToVisibleAccesses();
+        VM.ApplyClientFilter();
+
+        var results = await ConnectivityChecker.CheckAllAsync(accesses);
+        foreach (var pair in results)
+            _connectivityByAccess[pair.Key] = pair.Value ? ConnectivityStatus.Online : ConnectivityStatus.Offline;
+
+        ApplyConnectivityToVisibleAccesses();
+        ApplyClientConnectivityIndicators();
+    }
+
+    private void ApplyConnectivityToVisibleAccesses()
+    {
+        foreach (var access in VM.Accesses)
+        {
+            access.ConnectivityStatus = _connectivityByAccess.TryGetValue(access.Id, out var status)
+                ? status
+                : ConnectivityStatus.Unknown;
+        }
+
+        VM.ApplyAccessesFilter();
+    }
+
+    private void ApplyClientConnectivityIndicators()
+    {
+        var allAccesses = _repo.Load().accesses;
+
+        foreach (var client in VM.Clients)
+        {
+            var clientAccesses = allAccesses.Where(a => a.ClientId == client.Id).ToList();
+            if (clientAccesses.Count == 0)
+            {
+                client.ConnectivityStatus = ConnectivityStatus.Unknown;
+                continue;
+            }
+
+            var statuses = clientAccesses.Select(a =>
+                    _connectivityByAccess.TryGetValue(a.Id, out var st) ? st : ConnectivityStatus.Unknown)
+                .ToList();
+
+            if (statuses.Contains(ConnectivityStatus.Checking))
+                client.ConnectivityStatus = ConnectivityStatus.Checking;
+            else if (statuses.All(s => s == ConnectivityStatus.Online))
+                client.ConnectivityStatus = ConnectivityStatus.Online;
+            else if (statuses.Contains(ConnectivityStatus.Offline))
+                client.ConnectivityStatus = ConnectivityStatus.Offline;
+            else
+                client.ConnectivityStatus = ConnectivityStatus.Unknown;
+        }
+
+        VM.ApplyClientFilter();
+    }
+
+    private string BuildCloneAlias(string aliasBase)
+    {
+        var normalized = (aliasBase ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(normalized))
+            normalized = "Acesso";
+
+        var used = VM.Accesses
+            .Select(a => a.Apelido.Trim())
+            .Where(a => !string.IsNullOrWhiteSpace(a))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var first = $"{normalized}-copia";
+        if (!used.Contains(first))
+            return first;
+
+        for (var i = 2; i < 1000; i++)
+        {
+            var candidate = $"{normalized}-copia-{i}";
+            if (!used.Contains(candidate))
+                return candidate;
+        }
+
+        return $"{normalized}-copia-{Guid.NewGuid().ToString("N")[..6]}";
     }
 
     /// <summary>

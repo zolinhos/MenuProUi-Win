@@ -1,4 +1,5 @@
 using System;
+using CsvHelper.Configuration.Attributes;
 
 namespace MenuProUI.Models;
 
@@ -61,4 +62,16 @@ public class AccessEntry
     
     /// <summary>Data e hora da última atualização (UTC)</summary>
     public DateTime AtualizadoEm { get; set; } = DateTime.UtcNow;
+
+    [Ignore]
+    public ConnectivityStatus ConnectivityStatus { get; set; } = ConnectivityStatus.Unknown;
+
+    [Ignore]
+    public string ConnectivityStatusIcon => ConnectivityStatus switch
+    {
+        ConnectivityStatus.Online => "🟢",
+        ConnectivityStatus.Offline => "🔴",
+        ConnectivityStatus.Checking => "🟡",
+        _ => "⚪"
+    };
 }

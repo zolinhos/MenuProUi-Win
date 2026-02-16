@@ -1,0 +1,21 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="MenuProUI.Dialogs.ConnectivityScopeDialog"
+        Width="560" Height="220"
+        WindowStartupLocation="CenterOwner"
+        Title="Checar conectividade"
+        CanResize="False">
+  <Grid RowDefinitions="Auto,*,Auto" Margin="16" RowSpacing="14">
+    <TextBlock Text="Deseja checar conectividade apenas do cliente selecionado ou de todos os clientes?"
+               TextWrapping="Wrap" FontSize="15"/>
+
+    <TextBlock Grid.Row="1" Text="A checagem valida conexão TCP na porta de cada acesso (SSH, RDP e URL)."
+               Opacity="0.8" TextWrapping="Wrap"/>
+
+    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+      <Button Content="Cliente Selecionado" Click="OnSelectedClient"/>
+      <Button Content="Todos os Clientes" Click="OnAllClients"/>
+      <Button Content="Cancelar" Click="OnCancel"/>
+    </StackPanel>
+  </Grid>
+</Window>
