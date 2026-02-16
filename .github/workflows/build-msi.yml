@@ -113,7 +113,7 @@ jobs:
 
           $msiOut = Join-Path $distDir ("MenuProUI-" + $ver + "-x64.msi")
           Write-Host "Linking MSI with light..."
-          light -nologo -ext WixUIExtension -ext WixUtilExtension -out $msiOut (Join-Path $objDir 'Product.ci.wixobj') (Join-Path $objDir 'AppFiles.wixobj')
+          light -nologo -sval -ext WixUIExtension -ext WixUtilExtension -out $msiOut (Join-Path $objDir 'Product.ci.wixobj') (Join-Path $objDir 'AppFiles.wixobj')
           if ($LASTEXITCODE -ne 0) { throw "light falhou" }
 
           Write-Host "MSI criado em $msiOut"
