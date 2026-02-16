@@ -83,6 +83,28 @@ Para Windows você pode:
 - Usar `dotnet publish` e distribuir o diretório `publish\\win-x64` como ZIP;
 - Ou criar um instalador MSI com WiX usando os arquivos em `Installer/` (requer WiX Toolset e `candle`/`light`).
 
+Release `dist` (padrão da versão MAC)
+-------------------------------------
+Para gerar artefatos de distribuição no diretório `dist` (ZIP + checksums e MSI quando disponível):
+
+Windows (PowerShell):
+
+```powershell
+./build-dist-win.ps1 -Version 1.0.4
+```
+
+macOS/Linux (bash, gera ZIP/checksums e tenta MSI via `pwsh` se houver):
+
+```bash
+./build-dist-win.sh 1.0.4
+```
+
+Arquivos esperados em `dist/`:
+- `MenuProUI-<versão>-win-x64.zip`
+- `MenuProUI-<versão>-x64.msi` (quando gerado em Windows com WiX)
+- `SHA256SUMS`
+- `SHA512SUMS`
+
 Instalação
 ---------
 - Linux (.deb):
