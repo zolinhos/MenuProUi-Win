@@ -27,6 +27,7 @@ public partial class MainWindow : Window
     /// <summary>Atalho para acessar o ViewModel (DataContext da janela)</summary>
     private MainWindowViewModel VM => (MainWindowViewModel)DataContext!;
     private readonly CsvRepository _repo = new();
+    private readonly AuditLogService _auditLog = new();
     private readonly AppPreferencesService _preferencesService = new();
     private readonly Dictionary<Guid, ConnectivityStatus> _connectivityByAccess = new();
     private static readonly string[] ClientsMenuIcons = { "\uE716", "\uE77B", "\uE8B7" };
@@ -236,6 +237,14 @@ public partial class MainWindow : Window
                 return;
             }
 
+            // Ctrl+Alt+J - Exibir log de eventos/últimos acessos
+            if (hasCtrl && hasAlt && e.Key == Key.J)
+            {
+                e.Handled = true;
+                await ShowAuditLog();
+                return;
+            }
+
             // Enter - Abrir Acesso
             if (e.Key == Key.Return)
             {
@@ -309,6 +318,7 @@ Acessos:
 Interface:
     Ctrl+Alt+C            Alterna ícone do menu de clientes
     Ctrl+Alt+T            Alterna tema claro/escuro
+    Ctrl+Alt+J            Exibe log de eventos e últimos acessos
 
 Busca:
   Ctrl+L                Limpa todos os campos de busca
@@ -517,6 +527,7 @@ Versão 1.7.5 - MenuProUI";
         VM.SaveAll();
         VM.SelectedClient = created;
         VM.RefreshAccesses();
+        _auditLog.Append("create", "client", created.Nome, "Cliente criado");
     }
 
     /// <summary>
@@ -553,6 +564,7 @@ Versão 1.7.5 - MenuProUI";
 
         VM.SaveAll();
         VM.Reload();
+        _auditLog.Append("update", "client", edited.Nome, "Cliente alterado");
     }
 
     /// <summary>
@@ -579,6 +591,7 @@ Versão 1.7.5 - MenuProUI";
 
         VM.SaveAll();
         VM.Reload();
+        _auditLog.Append("delete", "client", client.Nome, "Cliente removido");
     }
 
     // ============== HANDLERS DE ACESSOS ==============
@@ -623,6 +636,7 @@ Versão 1.7.5 - MenuProUI";
         VM.RefreshAccesses();
         VM.SelectedAccess = created;
         ApplyConnectivityToVisibleAccesses();
+        _auditLog.Append("create", "access", created.Apelido, $"Tipo={created.Tipo}");
     }
 
     private void OnCloneAccess(object? sender, RoutedEventArgs e)
@@ -658,6 +672,7 @@ Versão 1.7.5 - MenuProUI";
         VM.RefreshAccesses();
         VM.SelectedAccess = VM.Accesses.FirstOrDefault(a => a.Id == clone.Id) ?? clone;
         ApplyConnectivityToVisibleAccesses();
+        _auditLog.Append("create", "access", clone.Apelido, $"Clonado de {source.Apelido}");
     }
 
     /// <summary>
@@ -688,6 +703,7 @@ Versão 1.7.5 - MenuProUI";
 
         VM.SaveAll();
         VM.RefreshAccesses();
+        _auditLog.Append("update", "access", edited.Apelido, $"Tipo={edited.Tipo}");
     }
 
     /// <summary>
@@ -711,6 +727,7 @@ Versão 1.7.5 - MenuProUI";
         VM.RefreshAccesses();
         ApplyConnectivityToVisibleAccesses();
         ApplyClientConnectivityIndicators();
+        _auditLog.Append("delete", "access", a.Apelido, "Acesso removido");
     }
 
     private void OnToggleFavorite(object? sender, RoutedEventArgs e)
@@ -721,6 +738,7 @@ Versão 1.7.5 - MenuProUI";
         access.IsFavorite = !access.IsFavorite;
         VM.SaveAll();
         VM.ApplyAccessesFilter();
+        _auditLog.Append("favorite", "access", access.Apelido, access.IsFavorite ? "Favoritado" : "Desfavoritado");
     }
 
     private async void OnCheckConnectivity(object? sender, RoutedEventArgs e)
@@ -928,6 +946,57 @@ Versão 1.7.5 - MenuProUI";
         access.LastOpenedAt = DateTime.UtcNow;
         VM.SaveAll();
         VM.ApplyAccessesFilter();
+        _auditLog.Append("open", "access", access.Apelido, access.Tipo.ToString());
+    }
+
+    private async Task ShowAuditLog()
+    {
+        var events = _auditLog.Load()
+            .OrderByDescending(x => x.TimestampUtc)
+            .Take(120)
+            .ToList();
+
+        var lastAccesses = events
+            .Where(x => string.Equals(x.Action, "open", StringComparison.OrdinalIgnoreCase))
+            .Take(40)
+            .ToList();
+
+        var lines = new List<string>
+        {
+            "LOG DE EVENTOS (ultimos 120)",
+            "════════════════════════════════════════════",
+            "",
+            "ULTIMOS ACESSOS:",
+        };
+
+        if (lastAccesses.Count == 0)
+        {
+            lines.Add("- Nenhum acesso recente registrado.");
+        }
+        else
+        {
+            foreach (var item in lastAccesses)
+                lines.Add($"- {item.TimestampUtc.ToLocalTime():dd/MM HH:mm:ss} | {item.EntityName} | {item.Details}");
+        }
+
+        lines.Add("");
+        lines.Add("EVENTOS GERAIS:");
+
+        if (events.Count == 0)
+        {
+            lines.Add("- Nenhum evento registrado.");
+        }
+        else
+        {
+            foreach (var item in events)
+                lines.Add($"- {item.TimestampUtc.ToLocalTime():dd/MM HH:mm:ss} | {item.Action} | {item.EntityType} | {item.EntityName} | {item.Details}");
+        }
+
+        lines.Add("");
+        lines.Add($"Arquivo: {AppPaths.AuditLogPath}");
+
+        var dialog = new HelpDialog(string.Join(Environment.NewLine, lines));
+        await dialog.ShowDialog<bool>(this);
     }
 
     private void CycleMenuIcon(string buttonName, IReadOnlyList<string> icons)

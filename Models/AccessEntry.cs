@@ -95,6 +95,12 @@ public class AccessEntry
     };
 
     [Ignore]
+    public string FavoriteIcon => IsFavorite ? "★" : "☆";
+
+    [Ignore]
+    public string FavoriteColor => IsFavorite ? "#FACC15" : "#A3A3A3";
+
+    [Ignore]
     public string DisplayMain => string.IsNullOrWhiteSpace(Apelido) ? "(sem apelido)" : Apelido;
 
     [Ignore]

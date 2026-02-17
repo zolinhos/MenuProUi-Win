@@ -54,4 +54,7 @@ public static class AppPaths
 
     /// <summary>Caminho legado do arquivo de acessos (usado em versões antigas)</summary>
     public static string LegacyAccessesPath => Path.Combine(AppDir, "acessos_legacy.csv");
+
+    /// <summary>Caminho do arquivo CSV de log de eventos (criação, alteração, remoção e abertura)</summary>
+    public static string AuditLogPath => Path.Combine(AppDir, "eventos.csv");
 }
