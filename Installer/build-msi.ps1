@@ -118,6 +118,7 @@ $prodGen  = Join-Path $installerDir "Product.gen.wxs"
 
 $icoPath    = Join-Path $root "Assets\menupro-ui.ico"
 $readmePath = Join-Path $installerDir "README-DEPENDENCIAS.txt"
+$licensePath = Join-Path $installerDir "LICENSE-ptbr.rtf"
 
 if (!(Test-Path $csproj)) { throw "csproj não encontrado: $csproj" }
 
@@ -152,6 +153,10 @@ Arquivos:
 # Ícone: exige que exista (pra MSI e WinExe ficarem bonitos)
 if (!(Test-Path $icoPath)) {
   throw "Ícone não encontrado: $icoPath (crie Assets\menupro-ui.ico)"
+}
+
+if (!(Test-Path $licensePath)) {
+  throw "Licença não encontrada: $licensePath"
 }
 
 # Garante csproj: OutputType=WinExe + ApplicationIcon
@@ -334,6 +339,7 @@ try {
 
     <UIRef Id="WixUI_Minimal" />
     <UIRef Id="WixUI_ErrorProgressText" />
+    <WixVariable Id="WixUILicenseRtf" Value="$licensePath" />
   </Product>
 </Wix>
 "@
@@ -353,6 +359,7 @@ try {
   $msiOut = Join-Path $distDir ("MenuProUI-" + $Version + "-x64.msi")
   ExecOrThrow $light @(
     "-nologo",
+    "-cultures:pt-BR",
     "-ext", "WixUIExtension",
     "-ext", "WixUtilExtension",
     "-out", $msiOut,

@@ -101,6 +101,7 @@ jobs:
             $productCi = Join-Path $root 'Installer\Product.ci.wxs'
             $iconPath = Join-Path $root 'Assets\menupro-ui.ico'
             $readmePath = Join-Path $root 'Installer\README-DEPENDENCIAS.txt'
+            $licensePath = Join-Path $root 'Installer\LICENSE-ptbr.rtf'
 
             New-Item -ItemType Directory -Path $distDir -Force | Out-Null
             New-Item -ItemType Directory -Path $objDir -Force | Out-Null
@@ -158,18 +159,19 @@ jobs:
               '    </Feature>',
               '    <UIRef Id="WixUI_Minimal" />',
               '    <UIRef Id="WixUI_ErrorProgressText" />',
+              '    <WixVariable Id="WixUILicenseRtf" Value="__LICENSE__" />',
               '  </Product>',
               '</Wix>'
             )
 
             $product = ($productLines -join "`n")
-            $product = $product.Replace('__VERSION__', $ver).Replace('__EXE__', $exePath).Replace('__ICON__', $iconPath).Replace('__README__', $readmePath)
+            $product = $product.Replace('__VERSION__', $ver).Replace('__EXE__', $exePath).Replace('__ICON__', $iconPath).Replace('__README__', $readmePath).Replace('__LICENSE__', $licensePath)
             Set-Content -Path $productCi -Value $product -Encoding UTF8
 
             candle -nologo -out (Join-Path $objDir '') $productCi
 
             $msiOut = Join-Path $distDir ("MenuProUI-" + $ver + "-x64.msi")
-            light -nologo -sval -ext WixUIExtension -out $msiOut (Join-Path $objDir 'Product.ci.wixobj')
+            light -nologo -sval -cultures:pt-BR -ext WixUIExtension -out $msiOut (Join-Path $objDir 'Product.ci.wixobj')
 
             if (-not (Test-Path $msiOut)) { throw "MSI fallback não foi gerado: $msiOut" }
           }
