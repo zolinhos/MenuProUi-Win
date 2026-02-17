@@ -17,13 +17,27 @@
         
         <!-- Menu Clientes -->
         <StackPanel Orientation="Horizontal" Spacing="5">
-          <Button Name="ClientsMenuBtn" Width="35" Height="35" Padding="0" ToolTip.Tip="Menu de Clientes">👥</Button>
+          <Button Name="ClientsMenuBtn"
+                  Width="35"
+                  Height="35"
+                  Padding="0"
+                  FontSize="24"
+                  HorizontalContentAlignment="Center"
+                  VerticalContentAlignment="Center"
+                  ToolTip.Tip="Menu de Clientes">👥</Button>
           <TextBlock VerticalAlignment="Center" Text="Clientes" FontWeight="Bold"/>
         </StackPanel>
 
         <!-- Menu Acessos -->
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5">
-          <Button Name="AccessesMenuBtn" Width="35" Height="35" Padding="0" ToolTip.Tip="Menu de Acessos">🖥</Button>
+          <Button Name="AccessesMenuBtn"
+                  Width="35"
+                  Height="35"
+                  Padding="0"
+                  FontSize="24"
+                  HorizontalContentAlignment="Center"
+                  VerticalContentAlignment="Center"
+                  ToolTip.Tip="Menu de Acessos">🖥</Button>
           <TextBlock VerticalAlignment="Center" Text="Acessos" FontWeight="Bold"/>
         </StackPanel>
 
