@@ -71,7 +71,7 @@
           <Border BorderBrush="#333" BorderThickness="0,1,0,0"/>
           <Button Content="✕ Excluir Cliente" Click="OnDeleteClient" Padding="12,8" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Background="Transparent"/>
           <Border BorderBrush="#333" BorderThickness="0,1,0,0"/>
-          <Button Content="⭳ Exportar backup" Click="OnExportBackup" Padding="12,8" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Background="Transparent"/>
+          <Button Content="⭳ Exportar backup (3 arquivos)" Click="OnExportBackup" Padding="12,8" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Background="Transparent"/>
           <Border BorderBrush="#333" BorderThickness="0,1,0,0"/>
           <Button Content="⭱ Importar backup" Click="OnImportBackup" Padding="12,8" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Background="Transparent"/>
         </StackPanel>

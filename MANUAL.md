@@ -54,6 +54,10 @@ Estrutura e caminhos de dados (backup e restauração)
 A aplicação armazena os dados do usuário em um diretório de configuração (variável `AppPaths.AppDir`):
 
 - Diretório: `Environment.SpecialFolder.ApplicationData` + `MenuProUI` (ex.: `~/.config/MenuProUI` ou `~/.local/share/MenuProUI`, dependendo do sistema).
+- Referências por sistema:
+  - Linux: `~/.config/MenuProUI` (ou `~/.local/share/MenuProUI`)
+  - macOS: `~/Library/Application Support/MenuProUI`
+  - Windows: `%APPDATA%\\MenuProUI`
 - Arquivos:
   - `clientes.csv` — lista de clientes.
   - `acessos.csv` — lista de acessos vinculados a clientes.
@@ -129,11 +133,19 @@ Atalhos principais
 - `Ctrl+Q` sair
 - `Ctrl+R` recarregar
 - `Ctrl+K` busca global
+- `Ctrl+Shift+B` exportar backup (`clientes.csv`, `acessos.csv`, `eventos.csv`)
 - `Ctrl+Shift+K` checar conectividade
 - `Ctrl+Alt+J` abrir log de eventos/últimos acessos
 - `Ctrl+Alt+T` alternar tema
 - `Ctrl+Alt+C` alternar ícone menu clientes
 - `Ctrl+Alt+A` alternar ícone menu acessos
+
+Busca global
+------------
+
+- A busca global (`Ctrl+K`) tem prioridade sobre os campos locais de busca.
+- Campos pesquisados em acessos: apelido, host, usuário, URL, domínio, observações e porta.
+- Campos pesquisados em clientes: nome e observações.
 
 Comportamento de migração
 -------------------------

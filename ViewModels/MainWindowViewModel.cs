@@ -28,6 +28,9 @@ public partial class MainWindowViewModel : ObservableObject
     /// <summary>Coleção de acessos filtrados pela busca (exibidos na UI)</summary>
     public ObservableCollection<AccessEntry> AccessesFiltered { get; } = new();
 
+    /// <summary>Cache com todos os acessos carregados (todos os clientes)</summary>
+    private System.Collections.Generic.List<AccessEntry> _allAccesses = new();
+
     /// <summary>Array com todos os tipos de acesso disponíveis (SSH, RDP, URL)</summary>
     public AccessType[] Tipos { get; } = Enum.GetValues<AccessType>();
 
@@ -107,6 +110,7 @@ public partial class MainWindowViewModel : ObservableObject
 
         // Carrega dados do repositório
         var (clients, accesses) = _repo.Load();
+        _allAccesses = accesses;
 
         // Popula coleção de clientes (ordenados por nome)
         foreach (var c in clients.OrderBy(c => c.Nome))
@@ -130,6 +134,7 @@ public partial class MainWindowViewModel : ObservableObject
         // Recarrega acessos se não fornecidos (para sincronizar com disco)
         var (_, loadedAccesses) = _repo.Load();
         var source = all ?? loadedAccesses;
+        _allAccesses = source;
 
         Accesses.Clear();
 
@@ -219,11 +224,12 @@ public partial class MainWindowViewModel : ObservableObject
     {
         ClientsFiltered.Clear();
 
-        var search = (ClientsSearchText ?? "").Trim().ToLower();
-        var global = (GlobalSearchText ?? "").Trim().ToLower();
+        var search = (ClientsSearchText ?? "").Trim();
+        var global = (GlobalSearchText ?? "").Trim();
+        var effective = string.IsNullOrWhiteSpace(global) ? search : global;
 
         // Se busca vazia, exibe todos os clientes
-        if (string.IsNullOrWhiteSpace(search) && string.IsNullOrWhiteSpace(global))
+        if (string.IsNullOrWhiteSpace(effective))
         {
             foreach (var c in Clients)
                 ClientsFiltered.Add(c);
@@ -231,13 +237,8 @@ public partial class MainWindowViewModel : ObservableObject
         else
         {
             foreach (var c in Clients.Where(c =>
-                         (string.IsNullOrWhiteSpace(search) ||
-                          c.Nome.ToLower().Contains(search) ||
-                          (c.Observacoes ?? "").ToLower().Contains(search))
-                         &&
-                         (string.IsNullOrWhiteSpace(global) ||
-                          c.Nome.ToLower().Contains(global) ||
-                          (c.Observacoes ?? "").ToLower().Contains(global))))
+                         ContainsIgnoreCase(c.Nome, effective) ||
+                         ContainsIgnoreCase(c.Observacoes, effective)))
                 ClientsFiltered.Add(c);
         }
     }
@@ -250,10 +251,16 @@ public partial class MainWindowViewModel : ObservableObject
     {
         AccessesFiltered.Clear();
 
-        var search = (AccessesSearchText ?? "").Trim().ToLower();
-        var global = (GlobalSearchText ?? "").Trim().ToLower();
+        var search = (AccessesSearchText ?? "").Trim();
+        var global = (GlobalSearchText ?? "").Trim();
+        var hasGlobal = !string.IsNullOrWhiteSpace(global);
+        var effective = hasGlobal ? global : search;
 
-        var ordered = Accesses
+        var source = hasGlobal
+            ? _allAccesses
+            : Accesses.ToList();
+
+        var ordered = source
             .OrderByDescending(a => a.IsFavorite)
             .ThenByDescending(a => a.LastOpenedAt ?? DateTime.MinValue)
             .ThenBy(a => a.Tipo)
@@ -261,7 +268,7 @@ public partial class MainWindowViewModel : ObservableObject
             .ToList();
 
         // Se busca vazia, exibe todos os acessos
-        if (string.IsNullOrWhiteSpace(search) && string.IsNullOrWhiteSpace(global))
+        if (string.IsNullOrWhiteSpace(effective))
         {
             foreach (var a in ordered)
                 AccessesFiltered.Add(a);
@@ -269,19 +276,13 @@ public partial class MainWindowViewModel : ObservableObject
         else
         {
             foreach (var a in ordered.Where(x =>
-                         (string.IsNullOrWhiteSpace(search) ||
-                          x.Apelido.ToLower().Contains(search) ||
-                          (x.Host ?? "").ToLower().Contains(search) ||
-                          (x.Usuario ?? "").ToLower().Contains(search) ||
-                          (x.Url ?? "").ToLower().Contains(search) ||
-                          (x.Dominio ?? "").ToLower().Contains(search))
-                         &&
-                         (string.IsNullOrWhiteSpace(global) ||
-                          x.Apelido.ToLower().Contains(global) ||
-                          (x.Host ?? "").ToLower().Contains(global) ||
-                          (x.Usuario ?? "").ToLower().Contains(global) ||
-                          (x.Url ?? "").ToLower().Contains(global) ||
-                          (x.Dominio ?? "").ToLower().Contains(global))))
+                         ContainsIgnoreCase(x.Apelido, effective) ||
+                         ContainsIgnoreCase(x.Host, effective) ||
+                         ContainsIgnoreCase(x.Usuario, effective) ||
+                         ContainsIgnoreCase(x.Url, effective) ||
+                         ContainsIgnoreCase(x.Dominio, effective) ||
+                         ContainsIgnoreCase(x.Observacoes, effective) ||
+                         (x.Porta?.ToString().Contains(effective, StringComparison.OrdinalIgnoreCase) ?? false)))
                 AccessesFiltered.Add(a);
         }
         
@@ -308,5 +309,13 @@ public partial class MainWindowViewModel : ObservableObject
         ApplyClientFilter();
         ApplyAccessesFilter();
         OnPropertyChanged(nameof(AccessesCountDisplay));
+    }
+
+    private static bool ContainsIgnoreCase(string? source, string value)
+    {
+        if (string.IsNullOrWhiteSpace(source) || string.IsNullOrWhiteSpace(value))
+            return false;
+
+        return source.Contains(value, StringComparison.OrdinalIgnoreCase);
     }
 }

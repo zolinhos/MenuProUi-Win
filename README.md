@@ -8,10 +8,12 @@ Funcionalidades
 - Clonagem rápida de acesso (gera apelido `-copia` automaticamente)
 - Checagem manual de conectividade TCP por cliente ou para todos os clientes
 - Busca global (`Ctrl+K`) + busca local por clientes/acessos
+- Busca global com prioridade sobre filtros locais, pesquisando alias, host, usuário, URL, domínio, observações e porta
 - Favoritos de acesso (estrela amarela quando ativo)
 - Ações rápidas por item: abrir, copiar host, copiar usuário, copiar URL
 - Log de eventos em CSV (`eventos.csv`) com atalho de consulta (`Ctrl+Alt+J`)
 - Exportação e importação de backup em ZIP pelo menu
+- Atalho `Ctrl+Shift+B` para exportar backup ZIP com `clientes.csv`, `acessos.csv` e `eventos.csv`
 - Validação rígida no cadastro:
 	- Host: apenas IPv4 válido
 	- Porta: faixa de `0` a `65535`
@@ -22,7 +24,7 @@ Resumo rápido
 -------------
 
 - Executável publicado: `MenuProUI` (Linux) / `MenuProUI.exe` (Windows) na pasta de `publish`.
-- Dados do usuário: diretório de aplicação (`AppPaths.AppDir`) — por exemplo `~/.config/MenuProUI` (Linux) ou `%APPDATA%\\MenuProUI` (Windows).
+- Dados do usuário: diretório de aplicação (`AppPaths.AppDir`) — por exemplo `~/.config/MenuProUI` (Linux), `~/Library/Application Support/MenuProUI` (macOS) ou `%APPDATA%\\MenuProUI` (Windows).
 - Arquivos de dados principais:
 	- `clientes.csv`
 	- `acessos.csv`
@@ -119,6 +121,7 @@ Atalhos de teclado
 - Ctrl+Shift+N = Novo acesso
 - Enter = Abrir acesso selecionado
 - Ctrl+Shift+K = Checar conectividade
+- Ctrl+Shift+B = Exportar backup (clientes.csv, acessos.csv, eventos.csv)
 - Ctrl+Alt+C = Alternar ícone do menu de clientes
 - Ctrl+Alt+A = Alternar ícone do menu de acessos
 - Ctrl+Alt+T = Alternar tema claro/escuro

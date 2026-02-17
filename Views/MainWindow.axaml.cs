@@ -213,6 +213,14 @@ public partial class MainWindow : Window
                 return;
             }
 
+            // Ctrl+Shift+B - Exportar backup (clientes, acessos, eventos)
+            if (hasCtrl && hasShift && e.Key == Key.B)
+            {
+                e.Handled = true;
+                OnExportBackup(null, new RoutedEventArgs());
+                return;
+            }
+
             // Ctrl+Alt+C - Alternar ícone de Clientes
             if (hasCtrl && hasAlt && e.Key == Key.C)
             {
@@ -319,18 +327,23 @@ Interface:
     Ctrl+Alt+C            Alterna ícone do menu de clientes
     Ctrl+Alt+T            Alterna tema claro/escuro
     Ctrl+Alt+J            Exibe log de eventos e últimos acessos
+    Ctrl+Shift+B          Exportar backup (3 arquivos)
 
 Busca:
+    Ctrl+K                Busca global (prioritária)
   Ctrl+L                Limpa todos os campos de busca
   (Digite para filtrar em tempo real)
+    A busca global ignora filtros locais de cliente/acesso
 
 📁 ARMAZENAMENTO:
   Linux:   ~/.config/MenuProUI/
+    macOS:   ~/Library/Application Support/MenuProUI/
   Windows: %APPDATA%\MenuProUI\
   
   Arquivos:
   • clientes.csv - Lista de clientes
   • acessos.csv - Lista de acessos
+    • eventos.csv - Log de eventos
 
 🔧 TIPOS DE ACESSO:
   • SSH: Conexão segura para Linux/Unix (porta 22)
@@ -466,8 +479,9 @@ Versão 1.7.5 - MenuProUI";
         using var zip = ZipFile.Open(targetPath, ZipArchiveMode.Create);
         if (File.Exists(AppPaths.ClientsPath)) zip.CreateEntryFromFile(AppPaths.ClientsPath, "clientes.csv");
         if (File.Exists(AppPaths.AccessesPath)) zip.CreateEntryFromFile(AppPaths.AccessesPath, "acessos.csv");
+        if (File.Exists(AppPaths.AuditLogPath)) zip.CreateEntryFromFile(AppPaths.AuditLogPath, "eventos.csv");
 
-        await new ConfirmDialog("Backup exportado com sucesso.", "Backup")
+        await new ConfirmDialog("Backup exportado com sucesso (clientes.csv, acessos.csv, eventos.csv).", "Backup")
             .ShowDialog<bool>(this);
     }
 
