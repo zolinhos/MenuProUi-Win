@@ -170,6 +170,13 @@
                  ItemsSource="{Binding AccessesFiltered}"
                  SelectedItem="{Binding SelectedAccess}"
                  DoubleTapped="OnOpenAccess">
+          <ListBox.Styles>
+            <Style Selector="ListBox#AccessList ListBoxItem">
+              <Setter Property="Padding" Value="0"/>
+              <Setter Property="Margin" Value="0"/>
+              <Setter Property="MinHeight" Value="0"/>
+            </Style>
+          </ListBox.Styles>
           <ListBox.ContextMenu>
             <ContextMenu>
               <MenuItem Header="Novo Acesso" Click="OnNewAccess"/>

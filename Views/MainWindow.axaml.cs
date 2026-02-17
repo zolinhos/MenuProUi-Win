@@ -525,6 +525,7 @@ Versão 1.7.5 - MenuProUI";
 
         VM.Clients.Add(created);
         VM.SaveAll();
+        VM.ApplyClientFilter();
         VM.SelectedClient = created;
         VM.RefreshAccesses();
         _auditLog.Append("create", "client", created.Nome, "Cliente criado");

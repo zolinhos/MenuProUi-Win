@@ -57,6 +57,8 @@ A aplicação armazena os dados do usuário em um diretório de configuração (
 - Arquivos:
   - `clientes.csv` — lista de clientes.
   - `acessos.csv` — lista de acessos vinculados a clientes.
+  - `eventos.csv` — log de eventos (criação, alteração, remoção, abertura e favoritos).
+  - `preferences.json` — preferências de UI (tema, ícones e densidade).
   - `acessos_legacy.csv` — legado (padrão antigo); o app tenta migrar automaticamente quando detectado.
 
 Para fazer backup rápido:
@@ -104,6 +106,33 @@ Uso básico (GUI)
   - `Novo Cliente`, `Editar Cliente`, `Excluir Cliente` — gerenciam clientes.
   - `Novo Acesso`, `Editar Acesso`, `Excluir Acesso`, `Abrir` — gerenciam e iniciam acessos.
 - Para abrir um acesso: selecione um acesso e clique em `Abrir` ou dê `DoubleTap`/duplo clique.
+- A lista de acessos exibe:
+  - Alias em destaque
+  - Detalhes dinâmicos (host/porta/usuário ou URL)
+  - Estrela de favorito (amarela quando ativo)
+  - Ações rápidas por item (abrir/copiar host/copiar usuário/copiar URL)
+
+Validações de cadastro de acesso
+--------------------------------
+
+- SSH/RDP:
+  - Host deve ser IPv4 válido (ex.: `192.168.0.10`)
+  - Porta deve estar entre `0` e `65535`
+- URL:
+  - Deve iniciar com `http://` ou `https://`
+
+Atalhos principais
+------------------
+
+- `F1` ajuda
+- `Esc` fecha menus
+- `Ctrl+Q` sair
+- `Ctrl+R` recarregar
+- `Ctrl+K` busca global
+- `Ctrl+Alt+J` abrir log de eventos/últimos acessos
+- `Ctrl+Alt+T` alternar tema
+- `Ctrl+Alt+C` alternar ícone menu clientes
+- `Ctrl+Alt+A` alternar ícone menu acessos
 
 Comportamento de migração
 -------------------------

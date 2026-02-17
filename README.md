@@ -7,14 +7,27 @@ Funcionalidades
 - Gerenciamento de clientes e seus acessos (SSH, RDP, URLs)
 - Clonagem rápida de acesso (gera apelido `-copia` automaticamente)
 - Checagem manual de conectividade TCP por cliente ou para todos os clientes
-- Busca em tempo real, atalhos de teclado e persistência em CSV
-- Publicação desktop para Linux e Windows (artifacts em `publish/`)
+- Busca global (`Ctrl+K`) + busca local por clientes/acessos
+- Favoritos de acesso (estrela amarela quando ativo)
+- Ações rápidas por item: abrir, copiar host, copiar usuário, copiar URL
+- Log de eventos em CSV (`eventos.csv`) com atalho de consulta (`Ctrl+Alt+J`)
+- Exportação e importação de backup em ZIP pelo menu
+- Validação rígida no cadastro:
+	- Host: apenas IPv4 válido
+	- Porta: faixa de `0` a `65535`
+	- URL: apenas `http://` ou `https://`
+- Publicação desktop para Linux e Windows (artifacts em `publish/` e `dist/`)
 
 Resumo rápido
 -------------
 
 - Executável publicado: `MenuProUI` (Linux) / `MenuProUI.exe` (Windows) na pasta de `publish`.
 - Dados do usuário: diretório de aplicação (`AppPaths.AppDir`) — por exemplo `~/.config/MenuProUI` (Linux) ou `%APPDATA%\\MenuProUI` (Windows).
+- Arquivos de dados principais:
+	- `clientes.csv`
+	- `acessos.csv`
+	- `eventos.csv` (auditoria)
+	- `preferences.json` (tema, ícones e densidade)
 
 Requisitos
 ----------
@@ -96,7 +109,20 @@ Instalação
 
 Atalhos de teclado
 ------------------
-(Principais) F1 = Ajuda, Esc = Fechar, Ctrl+Q = Sair, Ctrl+R = Recarregar, Enter = Lançar acesso, Ctrl+Shift+K = Checar conectividade.
+- F1 = Ajuda
+- Esc = Fechar menus
+- Ctrl+Q = Sair
+- Ctrl+R = Recarregar
+- Ctrl+K = Focar busca global
+- Ctrl+F = Focar busca de clientes
+- Ctrl+Shift+F = Focar busca de acessos
+- Ctrl+Shift+N = Novo acesso
+- Enter = Abrir acesso selecionado
+- Ctrl+Shift+K = Checar conectividade
+- Ctrl+Alt+C = Alternar ícone do menu de clientes
+- Ctrl+Alt+A = Alternar ícone do menu de acessos
+- Ctrl+Alt+T = Alternar tema claro/escuro
+- Ctrl+Alt+J = Exibir log de eventos / últimos acessos
 
 Documentação
 -------------
