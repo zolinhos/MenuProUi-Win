@@ -1,4 +1,6 @@
 using System;
+using System.Net;
+using System.Net.Sockets;
 using Avalonia.Controls;
 using MenuProUI.Models;
 
@@ -34,6 +36,9 @@ public partial class AccessDialog : Window
             RdpHeight = initial.RdpHeight,
             Url = initial.Url,
             Observacoes = initial.Observacoes,
+            IsFavorite = initial.IsFavorite,
+            OpenCount = initial.OpenCount,
+            LastOpenedAt = initial.LastOpenedAt,
             CriadoEm = initial.CriadoEm,
             AtualizadoEm = initial.AtualizadoEm
         };
@@ -92,7 +97,20 @@ public partial class AccessDialog : Window
         if (tipo == AccessType.URL)
         {
             var url = (UrlBox.Text ?? "").Trim();
-            if (string.IsNullOrWhiteSpace(url)) return;
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                _ = new ConfirmDialog("Informe uma URL válida (http:// ou https://).", "Validação")
+                    .ShowDialog<bool>(this);
+                return;
+            }
+
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var parsedUrl) ||
+                (parsedUrl.Scheme != Uri.UriSchemeHttp && parsedUrl.Scheme != Uri.UriSchemeHttps))
+            {
+                _ = new ConfirmDialog("URL inválida. Use http:// ou https://.", "Validação")
+                    .ShowDialog<bool>(this);
+                return;
+            }
 
             Result.Url = url;
 
@@ -110,13 +128,35 @@ public partial class AccessDialog : Window
         else
         {
             var host = (HostBox.Text ?? "").Trim();
-            if (string.IsNullOrWhiteSpace(host)) return;
+            if (string.IsNullOrWhiteSpace(host))
+            {
+                _ = new ConfirmDialog("Informe um host IPv4 válido.", "Validação")
+                    .ShowDialog<bool>(this);
+                return;
+            }
+
+            if (!IPAddress.TryParse(host, out var ip) || ip.AddressFamily != AddressFamily.InterNetwork)
+            {
+                _ = new ConfirmDialog("Host inválido. Informe um endereço IPv4 (ex: 192.168.0.10).", "Validação")
+                    .ShowDialog<bool>(this);
+                return;
+            }
 
             var user = (UserBox.Text ?? "").Trim();
             var portText = (PortBox.Text ?? "").Trim();
 
             int? port = null;
-            if (int.TryParse(portText, out var p) && p > 0 && p <= 65535) port = p;
+            if (!string.IsNullOrWhiteSpace(portText))
+            {
+                if (!int.TryParse(portText, out var p) || p < 0 || p > 65535)
+                {
+                    _ = new ConfirmDialog("Porta inválida. Use um número entre 0 e 65535.", "Validação")
+                        .ShowDialog<bool>(this);
+                    return;
+                }
+
+                port = p;
+            }
 
             Result.Host = host;
             Result.Usuario = string.IsNullOrWhiteSpace(user) ? null : user;

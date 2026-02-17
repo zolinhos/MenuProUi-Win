@@ -13,7 +13,7 @@
 
     <!-- Top bar with dropdown menus -->
     <Border Grid.ColumnSpan="2" CornerRadius="10" Padding="12" BorderBrush="#333" BorderThickness="1">
-      <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto" ColumnSpacing="15">
+      <Grid ColumnDefinitions="Auto,Auto,260,*,Auto,Auto,Auto,Auto" ColumnSpacing="15">
         
         <!-- Menu Clientes -->
         <StackPanel Orientation="Horizontal" Spacing="5">
@@ -43,13 +43,21 @@
           <TextBlock VerticalAlignment="Center" Text="Acessos" FontWeight="Bold" PointerPressed="OnAccessesLabelPressed"/>
         </StackPanel>
 
+        <!-- Busca global -->
+        <TextBox Grid.Column="2"
+                 Name="GlobalSearchBox"
+                 Watermark="🔎 Busca global..."
+                 Text="{Binding GlobalSearchText}"
+                 Padding="10,8" CornerRadius="6" BorderBrush="#333"/>
+
         <!-- Spacer -->
-        <Border Grid.Column="2"/>
+        <Border Grid.Column="3"/>
 
         <!-- Quick actions -->
-        <Button Grid.Column="3" Content="Abrir" Click="OnOpenAccess" ToolTip.Tip="Abrir acesso selecionado (Enter)"/>
-        <Button Grid.Column="4" Content="Checar Conectividade" Click="OnCheckConnectivity" ToolTip.Tip="Checar conectividade (Ctrl+Shift+K)"/>
-        <Button Grid.Column="5" Content="Recarregar" Click="OnReload" ToolTip.Tip="Recarregar dados"/>
+        <Button Grid.Column="4" Content="Tema" Click="OnToggleTheme" ToolTip.Tip="Alternar tema claro/escuro (Ctrl+Alt+T)"/>
+        <Button Grid.Column="5" Content="Densidade" Click="OnToggleDensity" ToolTip.Tip="Alternar densidade da lista"/>
+        <Button Grid.Column="6" Content="Abrir" Click="OnOpenAccess" ToolTip.Tip="Abrir acesso selecionado (Enter)"/>
+        <Button Grid.Column="7" Content="Checar Conectividade" Click="OnCheckConnectivity" ToolTip.Tip="Checar conectividade (Ctrl+Shift+K)"/>
       </Grid>
     </Border>
 
@@ -62,6 +70,10 @@
           <Button Content="✎ Editar Cliente" Click="OnEditClient" Padding="12,8" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Background="Transparent"/>
           <Border BorderBrush="#333" BorderThickness="0,1,0,0"/>
           <Button Content="✕ Excluir Cliente" Click="OnDeleteClient" Padding="12,8" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Background="Transparent"/>
+          <Border BorderBrush="#333" BorderThickness="0,1,0,0"/>
+          <Button Content="⭳ Exportar backup" Click="OnExportBackup" Padding="12,8" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Background="Transparent"/>
+          <Border BorderBrush="#333" BorderThickness="0,1,0,0"/>
+          <Button Content="⭱ Importar backup" Click="OnImportBackup" Padding="12,8" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Background="Transparent"/>
         </StackPanel>
       </Border>
     </Popup>
@@ -162,6 +174,7 @@
             <ContextMenu>
               <MenuItem Header="Novo Acesso" Click="OnNewAccess"/>
               <MenuItem Header="Abrir" Click="OnOpenAccess"/>
+              <MenuItem Header="Favoritar/Desfavoritar" Click="OnToggleFavorite"/>
               <MenuItem Header="Clonar" Click="OnCloneAccess"/>
               <MenuItem Header="Editar" Click="OnEditAccess"/>
               <MenuItem Header="Excluir" Click="OnDeleteAccess"/>
@@ -171,11 +184,18 @@
           <ListBox.ItemTemplate>
             <DataTemplate>
               <Border Padding="8" CornerRadius="8">
-                <Grid ColumnDefinitions="70,90,*" RowDefinitions="Auto,Auto" RowSpacing="2">
+                <Grid ColumnDefinitions="70,90,*,170" RowDefinitions="Auto,Auto" RowSpacing="2" ColumnSpacing="8">
                   <TextBlock Grid.Column="0" Grid.RowSpan="2" Text="{Binding ConnectivityStatusIcon}" VerticalAlignment="Center"/>
-                  <TextBlock Grid.Column="1" Grid.RowSpan="2" Text="{Binding Tipo}" Opacity="0.9" VerticalAlignment="Center"/>
+                  <TextBlock Grid.Column="1" Grid.RowSpan="2" Text="{Binding TypeIcon}" Opacity="0.95" VerticalAlignment="Center" FontSize="18"/>
                   <TextBlock Grid.Column="2" Grid.Row="0" Text="{Binding DisplayMain}" TextTrimming="CharacterEllipsis" FontWeight="SemiBold"/>
                   <TextBlock Grid.Column="2" Grid.Row="1" Text="{Binding DisplayDetails}" TextTrimming="CharacterEllipsis" Opacity="0.85" FontSize="12"/>
+                  <StackPanel Grid.Column="3" Grid.RowSpan="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" HorizontalAlignment="Right">
+                    <Button Content="★" Click="OnToggleFavorite" CommandParameter="{Binding}" ToolTip.Tip="Favoritar/Desfavoritar" Width="28" Height="28"/>
+                    <Button Content="▶" Click="OnQuickOpenAccess" CommandParameter="{Binding}" ToolTip.Tip="Abrir" Width="28" Height="28"/>
+                    <Button Content="H" Click="OnQuickCopyHost" CommandParameter="{Binding}" ToolTip.Tip="Copiar Host" Width="28" Height="28"/>
+                    <Button Content="U" Click="OnQuickCopyUser" CommandParameter="{Binding}" ToolTip.Tip="Copiar Usuário" Width="28" Height="28"/>
+                    <Button Content="W" Click="OnQuickCopyUrl" CommandParameter="{Binding}" ToolTip.Tip="Copiar URL" Width="28" Height="28"/>
+                  </StackPanel>
                 </Grid>
               </Border>
             </DataTemplate>

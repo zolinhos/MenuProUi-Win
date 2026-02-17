@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION="${1:-1.7.3}"
+VERSION="${1:-1.7.5}"
 RUNTIME="${RUNTIME:-win-x64}"
 BUILD_MSI="${BUILD_MSI:-1}"
 

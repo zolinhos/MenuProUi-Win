@@ -59,6 +59,15 @@ public class AccessEntry
     /// <summary>Observações adicionais sobre este acesso (opcional)</summary>
     public string? Observacoes { get; set; }
 
+    /// <summary>Define se o acesso está marcado como favorito/fixado</summary>
+    public bool IsFavorite { get; set; }
+
+    /// <summary>Contador de vezes que o acesso foi aberto</summary>
+    public int OpenCount { get; set; }
+
+    /// <summary>Data/hora da última abertura do acesso (UTC)</summary>
+    public DateTime? LastOpenedAt { get; set; }
+
     /// <summary>Data e hora de criação deste acesso (UTC)</summary>
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
     
@@ -75,6 +84,14 @@ public class AccessEntry
         ConnectivityStatus.Offline => "🔴",
         ConnectivityStatus.Checking => "🟡",
         _ => "⚪"
+    };
+
+    [Ignore]
+    public string TypeIcon => Tipo switch
+    {
+        AccessType.SSH => "🔐",
+        AccessType.RDP => "🖥",
+        _ => "🌐"
     };
 
     [Ignore]

@@ -1,11 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
+using Avalonia.Styling;
 using MenuProUI.Dialogs;
 using MenuProUI.Models;
 using MenuProUI.Services;
@@ -23,9 +27,11 @@ public partial class MainWindow : Window
     /// <summary>Atalho para acessar o ViewModel (DataContext da janela)</summary>
     private MainWindowViewModel VM => (MainWindowViewModel)DataContext!;
     private readonly CsvRepository _repo = new();
+    private readonly AppPreferencesService _preferencesService = new();
     private readonly Dictionary<Guid, ConnectivityStatus> _connectivityByAccess = new();
     private static readonly string[] ClientsMenuIcons = { "\uE716", "\uE77B", "\uE8B7" };
     private static readonly string[] AccessesMenuIcons = { "\uE7F4", "\uE71B", "\uE774" };
+    private AppPreferences _preferences = new();
 
     /// <summary>
     /// Inicializa a janela principal.
@@ -47,6 +53,9 @@ public partial class MainWindow : Window
 
         // Configura handler para tecla F1 (Help)
         this.KeyDown += MainWindow_KeyDown;
+        this.Closing += (_, _) => SavePreferences();
+
+        LoadPreferences();
     }
 
     /// <summary>Handler para teclas pressionadas - detecta atalhos de teclado</summary>
@@ -88,6 +97,19 @@ public partial class MainWindow : Window
             {
                 e.Handled = true;
                 OnReload(null, new RoutedEventArgs());
+                return;
+            }
+
+            // Ctrl+K - Busca global / paleta rápida
+            if (hasCtrl && e.Key == Key.K)
+            {
+                e.Handled = true;
+                var globalSearchBox = this.FindControl<TextBox>("GlobalSearchBox");
+                if (globalSearchBox != null)
+                {
+                    globalSearchBox.Focus();
+                    globalSearchBox.SelectAll();
+                }
                 return;
             }
 
@@ -206,6 +228,14 @@ public partial class MainWindow : Window
                 return;
             }
 
+            // Ctrl+Alt+T - Alternar tema
+            if (hasCtrl && hasAlt && e.Key == Key.T)
+            {
+                e.Handled = true;
+                OnToggleTheme(null, new RoutedEventArgs());
+                return;
+            }
+
             // Enter - Abrir Acesso
             if (e.Key == Key.Return)
             {
@@ -258,6 +288,7 @@ Navegação Geral:
   Escape                Fecha menus abertos
   Ctrl+R                Recarrega dados do disco
   Ctrl+Q                Sair da aplicação
+    Ctrl+K                Focar busca global
 
 Clientes:
   Ctrl+N                Novo cliente
@@ -277,6 +308,7 @@ Acessos:
 
 Interface:
     Ctrl+Alt+C            Alterna ícone do menu de clientes
+    Ctrl+Alt+T            Alterna tema claro/escuro
 
 Busca:
   Ctrl+L                Limpa todos os campos de busca
@@ -318,7 +350,7 @@ GitHub: https://github.com/zolinhos/MenuProUI-Linux
 Issues: https://github.com/zolinhos/MenuProUI-Linux/issues
 Discussions: https://github.com/zolinhos/MenuProUI-Linux/discussions
 
-Versão 1.7.3 - MenuProUI";
+Versão 1.7.5 - MenuProUI";
 
         var dlg = new HelpDialog(helpText);
         await dlg.ShowDialog<bool>(this);
@@ -383,6 +415,82 @@ Versão 1.7.3 - MenuProUI";
     {
         CloseMenus();
         VM.Reload();
+    }
+
+    private void OnToggleTheme(object? sender, RoutedEventArgs e)
+    {
+        RequestedThemeVariant = RequestedThemeVariant == ThemeVariant.Light ? ThemeVariant.Dark : ThemeVariant.Light;
+        _preferences.Theme = RequestedThemeVariant == ThemeVariant.Light ? "Light" : "Dark";
+        SavePreferences();
+    }
+
+    private void OnToggleDensity(object? sender, RoutedEventArgs e)
+    {
+        var accessList = this.FindControl<ListBox>("AccessList");
+        if (accessList == null) return;
+
+        var compact = !(_preferences.CompactAccessRows);
+        _preferences.CompactAccessRows = compact;
+        accessList.FontSize = compact ? 12 : 13;
+        SavePreferences();
+    }
+
+    private async void OnExportBackup(object? sender, RoutedEventArgs e)
+    {
+        CloseMenus();
+
+        var storage = TopLevel.GetTopLevel(this)?.StorageProvider;
+        if (storage == null) return;
+
+        var file = await storage.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Exportar backup",
+            SuggestedFileName = $"MenuProUI-backup-{DateTime.Now:yyyyMMdd-HHmmss}.zip"
+        });
+
+        if (file == null) return;
+
+        var targetPath = file.TryGetLocalPath();
+        if (string.IsNullOrWhiteSpace(targetPath)) return;
+
+        using var zip = ZipFile.Open(targetPath, ZipArchiveMode.Create);
+        if (File.Exists(AppPaths.ClientsPath)) zip.CreateEntryFromFile(AppPaths.ClientsPath, "clientes.csv");
+        if (File.Exists(AppPaths.AccessesPath)) zip.CreateEntryFromFile(AppPaths.AccessesPath, "acessos.csv");
+
+        await new ConfirmDialog("Backup exportado com sucesso.", "Backup")
+            .ShowDialog<bool>(this);
+    }
+
+    private async void OnImportBackup(object? sender, RoutedEventArgs e)
+    {
+        CloseMenus();
+
+        var storage = TopLevel.GetTopLevel(this)?.StorageProvider;
+        if (storage == null) return;
+
+        var files = await storage.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Importar backup",
+            AllowMultiple = false
+        });
+
+        var file = files.FirstOrDefault();
+        if (file == null) return;
+
+        var sourcePath = file.TryGetLocalPath();
+        if (string.IsNullOrWhiteSpace(sourcePath) || !File.Exists(sourcePath)) return;
+
+        using var zip = ZipFile.OpenRead(sourcePath);
+        var clientsEntry = zip.Entries.FirstOrDefault(x => x.FullName.EndsWith("clientes.csv", StringComparison.OrdinalIgnoreCase));
+        var accessesEntry = zip.Entries.FirstOrDefault(x => x.FullName.EndsWith("acessos.csv", StringComparison.OrdinalIgnoreCase));
+
+        clientsEntry?.ExtractToFile(AppPaths.ClientsPath, true);
+        accessesEntry?.ExtractToFile(AppPaths.AccessesPath, true);
+
+        VM.Reload();
+
+        await new ConfirmDialog("Backup importado com sucesso.", "Backup")
+            .ShowDialog<bool>(this);
     }
 
     // ============== HANDLERS DE CLIENTES ==============
@@ -605,6 +713,16 @@ Versão 1.7.3 - MenuProUI";
         ApplyClientConnectivityIndicators();
     }
 
+    private void OnToggleFavorite(object? sender, RoutedEventArgs e)
+    {
+        var access = ResolveAccessFromSender(sender) ?? VM.SelectedAccess;
+        if (access == null) return;
+
+        access.IsFavorite = !access.IsFavorite;
+        VM.SaveAll();
+        VM.ApplyAccessesFilter();
+    }
+
     private async void OnCheckConnectivity(object? sender, RoutedEventArgs e)
     {
         CloseMenus();
@@ -742,12 +860,74 @@ Versão 1.7.3 - MenuProUI";
         {
             // Abre/conecta ao acesso usando o serviço de launcher
             AccessLauncher.Open(VM.SelectedAccess);
+            MarkAccessOpened(VM.SelectedAccess);
         }
         catch (Exception ex)
         {
             // Exibe erro se falhar
             _ = new ConfirmDialog($"Falha ao abrir:\n{ex.Message}", "Erro").ShowDialog<bool>(this);
         }
+    }
+
+    private void OnQuickOpenAccess(object? sender, RoutedEventArgs e)
+    {
+        var access = ResolveAccessFromSender(sender);
+        if (access == null) return;
+
+        VM.SelectedAccess = access;
+        OnOpenAccess(sender, e);
+    }
+
+    private async void OnQuickCopyHost(object? sender, RoutedEventArgs e)
+    {
+        var access = ResolveAccessFromSender(sender);
+        var text = access?.Host;
+        if (string.IsNullOrWhiteSpace(text)) return;
+
+        var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+        if (clipboard == null) return;
+        await clipboard.SetTextAsync(text);
+    }
+
+    private async void OnQuickCopyUser(object? sender, RoutedEventArgs e)
+    {
+        var access = ResolveAccessFromSender(sender);
+        var text = access?.Usuario;
+        if (string.IsNullOrWhiteSpace(text)) return;
+
+        var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+        if (clipboard == null) return;
+        await clipboard.SetTextAsync(text);
+    }
+
+    private async void OnQuickCopyUrl(object? sender, RoutedEventArgs e)
+    {
+        var access = ResolveAccessFromSender(sender);
+        var text = access?.Url;
+        if (string.IsNullOrWhiteSpace(text)) return;
+
+        var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+        if (clipboard == null) return;
+        await clipboard.SetTextAsync(text);
+    }
+
+    private AccessEntry? ResolveAccessFromSender(object? sender)
+    {
+        if (sender is Control { DataContext: AccessEntry fromDataContext })
+            return fromDataContext;
+
+        if (sender is Button { CommandParameter: AccessEntry fromButtonParam })
+            return fromButtonParam;
+
+        return null;
+    }
+
+    private void MarkAccessOpened(AccessEntry access)
+    {
+        access.OpenCount++;
+        access.LastOpenedAt = DateTime.UtcNow;
+        VM.SaveAll();
+        VM.ApplyAccessesFilter();
     }
 
     private void CycleMenuIcon(string buttonName, IReadOnlyList<string> icons)
@@ -768,5 +948,39 @@ Versão 1.7.3 - MenuProUI";
 
         var nextIndex = index >= 0 ? (index + 1) % icons.Count : 0;
         button.Content = icons[nextIndex];
+        SavePreferences();
+    }
+
+    private void LoadPreferences()
+    {
+        _preferences = _preferencesService.Load();
+
+        var clientsBtn = this.FindControl<Button>("ClientsMenuBtn");
+        if (clientsBtn != null && !string.IsNullOrWhiteSpace(_preferences.ClientsIcon))
+            clientsBtn.Content = _preferences.ClientsIcon;
+
+        var accessesBtn = this.FindControl<Button>("AccessesMenuBtn");
+        if (accessesBtn != null && !string.IsNullOrWhiteSpace(_preferences.AccessesIcon))
+            accessesBtn.Content = _preferences.AccessesIcon;
+
+        RequestedThemeVariant = _preferences.Theme.Equals("Light", StringComparison.OrdinalIgnoreCase)
+            ? ThemeVariant.Light
+            : ThemeVariant.Dark;
+
+        var accessList = this.FindControl<ListBox>("AccessList");
+        if (accessList != null)
+            accessList.FontSize = _preferences.CompactAccessRows ? 12 : 13;
+    }
+
+    private void SavePreferences()
+    {
+        var clientsBtn = this.FindControl<Button>("ClientsMenuBtn");
+        var accessesBtn = this.FindControl<Button>("AccessesMenuBtn");
+
+        _preferences.ClientsIcon = clientsBtn?.Content?.ToString() ?? _preferences.ClientsIcon;
+        _preferences.AccessesIcon = accessesBtn?.Content?.ToString() ?? _preferences.AccessesIcon;
+        _preferences.Theme = RequestedThemeVariant == ThemeVariant.Light ? "Light" : "Dark";
+
+        _preferencesService.Save(_preferences);
     }
 }

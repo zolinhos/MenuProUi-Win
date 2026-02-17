@@ -1,4 +1,4 @@
-# MenuProUI v1.7.3
+# MenuProUI v1.7.5
 
 MenuProUI é um gerenciador de acessos (SSH, RDP e URLs) organizado por clientes, desenvolvido em .NET + Avalonia e multiplataforma.
 
@@ -70,13 +70,13 @@ Para gerar artefatos de distribuição no diretório `dist` (ZIP + checksums e M
 Windows (PowerShell):
 
 ```powershell
-./build-dist-win.ps1 -Version 1.7.3
+./build-dist-win.ps1 -Version 1.7.5
 ```
 
 macOS/Linux (bash, gera ZIP/checksums e tenta MSI via `pwsh` se houver):
 
 ```bash
-./build-dist-win.sh 1.7.3
+./build-dist-win.sh 1.7.5
 ```
 
 Arquivos esperados em `dist/`:
@@ -89,7 +89,7 @@ Instalação
 ---------
 - Linux (.deb):
 	```bash
-	sudo dpkg -i menupro-ui_1.7.3_amd64.deb
+	sudo dpkg -i menupro-ui_1.7.5_amd64.deb
 	sudo apt-get install -f
 	```
 - Windows (ZIP): extraia `publish\\win-x64` e execute `MenuProUI.exe`.
@@ -112,4 +112,4 @@ Abra issues e PRs no repositório para melhorias no empacotamento, traduções o
 
 Changelog
 ---------
-Versão atual: `v1.7.3`
+Versão atual: `v1.7.5`

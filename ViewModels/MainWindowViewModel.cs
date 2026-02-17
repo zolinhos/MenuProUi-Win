@@ -43,6 +43,9 @@ public partial class MainWindowViewModel : ObservableObject
     /// <summary>Texto de busca para filtrar acessos em tempo real</summary>
     [ObservableProperty] private string _accessesSearchText = "";
 
+    /// <summary>Busca global unificada (clientes e acessos)</summary>
+    [ObservableProperty] private string _globalSearchText = "";
+
     /// <summary>Texto exibido na UI com data/hora da última checagem de conectividade</summary>
     [ObservableProperty] private string _lastConnectivityCheckText = "Não checado";
 
@@ -217,19 +220,24 @@ public partial class MainWindowViewModel : ObservableObject
         ClientsFiltered.Clear();
 
         var search = (ClientsSearchText ?? "").Trim().ToLower();
+        var global = (GlobalSearchText ?? "").Trim().ToLower();
 
         // Se busca vazia, exibe todos os clientes
-        if (string.IsNullOrWhiteSpace(search))
+        if (string.IsNullOrWhiteSpace(search) && string.IsNullOrWhiteSpace(global))
         {
             foreach (var c in Clients)
                 ClientsFiltered.Add(c);
         }
         else
         {
-            // Filtra por nome ou observações
-            foreach (var c in Clients.Where(c => 
-                c.Nome.ToLower().Contains(search) ||
-                (c.Observacoes ?? "").ToLower().Contains(search)))
+            foreach (var c in Clients.Where(c =>
+                         (string.IsNullOrWhiteSpace(search) ||
+                          c.Nome.ToLower().Contains(search) ||
+                          (c.Observacoes ?? "").ToLower().Contains(search))
+                         &&
+                         (string.IsNullOrWhiteSpace(global) ||
+                          c.Nome.ToLower().Contains(global) ||
+                          (c.Observacoes ?? "").ToLower().Contains(global))))
                 ClientsFiltered.Add(c);
         }
     }
@@ -243,22 +251,37 @@ public partial class MainWindowViewModel : ObservableObject
         AccessesFiltered.Clear();
 
         var search = (AccessesSearchText ?? "").Trim().ToLower();
+        var global = (GlobalSearchText ?? "").Trim().ToLower();
+
+        var ordered = Accesses
+            .OrderByDescending(a => a.IsFavorite)
+            .ThenByDescending(a => a.LastOpenedAt ?? DateTime.MinValue)
+            .ThenBy(a => a.Tipo)
+            .ThenBy(a => a.Apelido)
+            .ToList();
 
         // Se busca vazia, exibe todos os acessos
-        if (string.IsNullOrWhiteSpace(search))
+        if (string.IsNullOrWhiteSpace(search) && string.IsNullOrWhiteSpace(global))
         {
-            foreach (var a in Accesses)
+            foreach (var a in ordered)
                 AccessesFiltered.Add(a);
         }
         else
         {
-            // Filtra por múltiplos campos
-            foreach (var a in Accesses.Where(x =>
-                x.Apelido.ToLower().Contains(search) ||
-                (x.Host ?? "").ToLower().Contains(search) ||
-                (x.Usuario ?? "").ToLower().Contains(search) ||
-                (x.Url ?? "").ToLower().Contains(search) ||
-                (x.Dominio ?? "").ToLower().Contains(search)))
+            foreach (var a in ordered.Where(x =>
+                         (string.IsNullOrWhiteSpace(search) ||
+                          x.Apelido.ToLower().Contains(search) ||
+                          (x.Host ?? "").ToLower().Contains(search) ||
+                          (x.Usuario ?? "").ToLower().Contains(search) ||
+                          (x.Url ?? "").ToLower().Contains(search) ||
+                          (x.Dominio ?? "").ToLower().Contains(search))
+                         &&
+                         (string.IsNullOrWhiteSpace(global) ||
+                          x.Apelido.ToLower().Contains(global) ||
+                          (x.Host ?? "").ToLower().Contains(global) ||
+                          (x.Usuario ?? "").ToLower().Contains(global) ||
+                          (x.Url ?? "").ToLower().Contains(global) ||
+                          (x.Dominio ?? "").ToLower().Contains(global))))
                 AccessesFiltered.Add(a);
         }
         
@@ -277,6 +300,13 @@ public partial class MainWindowViewModel : ObservableObject
     {
         ApplyAccessesFilter();
         // Notifica que AccessesCountDisplay mudou
+        OnPropertyChanged(nameof(AccessesCountDisplay));
+    }
+
+    partial void OnGlobalSearchTextChanged(string value)
+    {
+        ApplyClientFilter();
+        ApplyAccessesFilter();
         OnPropertyChanged(nameof(AccessesCountDisplay));
     }
 }

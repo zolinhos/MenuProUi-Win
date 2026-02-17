@@ -4,10 +4,10 @@
     <ApplicationIcon>Assets\menupro-ui.ico</ApplicationIcon>
 <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
-    <Version>1.7.3</Version>
-    <AssemblyVersion>1.7.3.0</AssemblyVersion>
-    <FileVersion>1.7.3.0</FileVersion>
-    <InformationalVersion>1.7.3</InformationalVersion>
+    <Version>1.7.5</Version>
+    <AssemblyVersion>1.7.5.0</AssemblyVersion>
+    <FileVersion>1.7.5.0</FileVersion>
+    <InformationalVersion>1.7.5</InformationalVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
