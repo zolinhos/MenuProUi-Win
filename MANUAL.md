@@ -129,6 +129,7 @@ Atalhos principais
 - `Ctrl+Q` sair
 - `Ctrl+R` recarregar
 - `Ctrl+K` busca global
+- `Ctrl+Shift+K` checar conectividade
 - `Ctrl+Alt+J` abrir log de eventos/últimos acessos
 - `Ctrl+Alt+T` alternar tema
 - `Ctrl+Alt+C` alternar ícone menu clientes

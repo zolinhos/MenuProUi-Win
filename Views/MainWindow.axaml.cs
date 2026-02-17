@@ -102,7 +102,7 @@ public partial class MainWindow : Window
             }
 
             // Ctrl+K - Busca global / paleta rápida
-            if (hasCtrl && e.Key == Key.K)
+            if (hasCtrl && !hasShift && !hasAlt && e.Key == Key.K)
             {
                 e.Handled = true;
                 var globalSearchBox = this.FindControl<TextBox>("GlobalSearchBox");
