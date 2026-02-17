@@ -164,6 +164,7 @@
                  DoubleTapped="OnOpenAccess">
           <ListBox.ContextMenu>
             <ContextMenu>
+              <MenuItem Header="Novo Acesso" Click="OnNewAccess"/>
               <MenuItem Header="Abrir" Click="OnOpenAccess"/>
               <MenuItem Header="Clonar" Click="OnCloneAccess"/>
               <MenuItem Header="Editar" Click="OnEditAccess"/>
