@@ -146,14 +146,10 @@
                  Padding="10,8" CornerRadius="6" BorderBrush="#333"/>
 
         <!-- Header columns -->
-        <Grid Grid.Row="2" ColumnDefinitions="70,90,*,200,70,140,160" Opacity="0.85">
+        <Grid Grid.Row="2" ColumnDefinitions="70,90,*" Opacity="0.85">
           <TextBlock Grid.Column="0" Text="Status" FontWeight="Bold"/>
           <TextBlock Grid.Column="1" Text="Tipo" FontWeight="Bold"/>
-          <TextBlock Grid.Column="2" Text="Apelido" FontWeight="Bold"/>
-          <TextBlock Grid.Column="3" Text="Host" FontWeight="Bold"/>
-          <TextBlock Grid.Column="4" Text="Porta" FontWeight="Bold"/>
-          <TextBlock Grid.Column="5" Text="Usuário" FontWeight="Bold"/>
-          <TextBlock Grid.Column="6" Text="URL" FontWeight="Bold"/>
+          <TextBlock Grid.Column="2" Text="Alias / Detalhes" FontWeight="Bold"/>
         </Grid>
 
         <!-- Accesses list filtered -->
@@ -175,14 +171,11 @@
           <ListBox.ItemTemplate>
             <DataTemplate>
               <Border Padding="8" CornerRadius="8">
-                <Grid ColumnDefinitions="70,90,*,200,70,140,160">
-                  <TextBlock Grid.Column="0" Text="{Binding ConnectivityStatusIcon}"/>
-                  <TextBlock Grid.Column="1" Text="{Binding Tipo}" Opacity="0.9"/>
-                  <TextBlock Grid.Column="2" Text="{Binding Apelido}" TextTrimming="CharacterEllipsis"/>
-                  <TextBlock Grid.Column="3" Text="{Binding Host}" TextTrimming="CharacterEllipsis" Opacity="0.9"/>
-                  <TextBlock Grid.Column="4" Text="{Binding Porta}" Opacity="0.9"/>
-                  <TextBlock Grid.Column="5" Text="{Binding Usuario}" TextTrimming="CharacterEllipsis" Opacity="0.9"/>
-                  <TextBlock Grid.Column="6" Text="{Binding Url}" TextTrimming="CharacterEllipsis" Opacity="0.9"/>
+                <Grid ColumnDefinitions="70,90,*" RowDefinitions="Auto,Auto" RowSpacing="2">
+                  <TextBlock Grid.Column="0" Grid.RowSpan="2" Text="{Binding ConnectivityStatusIcon}" VerticalAlignment="Center"/>
+                  <TextBlock Grid.Column="1" Grid.RowSpan="2" Text="{Binding Tipo}" Opacity="0.9" VerticalAlignment="Center"/>
+                  <TextBlock Grid.Column="2" Grid.Row="0" Text="{Binding DisplayMain}" TextTrimming="CharacterEllipsis" FontWeight="SemiBold"/>
+                  <TextBlock Grid.Column="2" Grid.Row="1" Text="{Binding DisplayDetails}" TextTrimming="CharacterEllipsis" Opacity="0.85" FontSize="12"/>
                 </Grid>
               </Border>
             </DataTemplate>

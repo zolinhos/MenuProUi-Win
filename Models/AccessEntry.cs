@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using CsvHelper.Configuration.Attributes;
 
 namespace MenuProUI.Models;
@@ -74,4 +76,33 @@ public class AccessEntry
         ConnectivityStatus.Checking => "🟡",
         _ => "⚪"
     };
+
+    [Ignore]
+    public string DisplayMain => string.IsNullOrWhiteSpace(Apelido) ? "(sem apelido)" : Apelido;
+
+    [Ignore]
+    public string DisplayDetails
+    {
+        get
+        {
+            if (Tipo == AccessType.URL)
+                return string.IsNullOrWhiteSpace(Url) ? "URL não informada" : Url!;
+
+            var parts = new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(Host))
+                parts.Add($"Host: {Host}");
+
+            if (Porta.HasValue)
+                parts.Add($"Porta: {Porta.Value}");
+
+            if (!string.IsNullOrWhiteSpace(Usuario))
+                parts.Add($"Usuário: {Usuario}");
+
+            if (Tipo == AccessType.RDP && !string.IsNullOrWhiteSpace(Dominio))
+                parts.Add($"Domínio: {Dominio}");
+
+            return parts.Count > 0 ? string.Join("  •  ", parts.Where(p => !string.IsNullOrWhiteSpace(p))) : "Sem detalhes de conexão";
+        }
+    }
 }
