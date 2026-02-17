@@ -102,6 +102,7 @@ jobs:
             $iconPath = Join-Path $root 'Assets\menupro-ui.ico'
             $readmePath = Join-Path $root 'Installer\README-DEPENDENCIAS.txt'
             $licensePath = Join-Path $root 'Installer\LICENSE-ptbr.rtf'
+            $wxlPath = Join-Path $root 'Installer\WixUI.pt-BR.wxl'
 
             New-Item -ItemType Directory -Path $distDir -Force | Out-Null
             New-Item -ItemType Directory -Path $objDir -Force | Out-Null
@@ -171,7 +172,7 @@ jobs:
             candle -nologo -out (Join-Path $objDir '') $productCi
 
             $msiOut = Join-Path $distDir ("MenuProUI-" + $ver + "-x64.msi")
-            light -nologo -sval -cultures:pt-BR -ext WixUIExtension -out $msiOut (Join-Path $objDir 'Product.ci.wixobj')
+            light -nologo -sval -cultures:pt-BR -loc $wxlPath -ext WixUIExtension -out $msiOut (Join-Path $objDir 'Product.ci.wixobj')
 
             if (-not (Test-Path $msiOut)) { throw "MSI fallback não foi gerado: $msiOut" }
           }
@@ -224,12 +225,12 @@ jobs:
             "- SHA256SUMS",
             "- SHA512SUMS",
             "",
-            "## Instalação",
+            "## Instalacao",
             "1. Baixe e execute o instalador MSI.",
-            "2. Alternativa: use o ZIP portável e execute MenuProUI.exe.",
+            "2. Alternativa: use o ZIP portavel e execute MenuProUI.exe.",
             "",
             "## Integridade",
-            "Valide os hashes com os arquivos SHA256SUMS/SHA512SUMS incluídos."
+            "Valide os hashes com os arquivos SHA256SUMS/SHA512SUMS incluidos."
           ) -join "`n"
           $notesPath = "dist/release_notes_$tag.md"
           $notes | Set-Content -Path $notesPath -Encoding UTF8

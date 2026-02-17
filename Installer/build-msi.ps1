@@ -119,6 +119,7 @@ $prodGen  = Join-Path $installerDir "Product.gen.wxs"
 $icoPath    = Join-Path $root "Assets\menupro-ui.ico"
 $readmePath = Join-Path $installerDir "README-DEPENDENCIAS.txt"
 $licensePath = Join-Path $installerDir "LICENSE-ptbr.rtf"
+$wxlPath = Join-Path $installerDir "WixUI.pt-BR.wxl"
 
 if (!(Test-Path $csproj)) { throw "csproj não encontrado: $csproj" }
 
@@ -157,6 +158,10 @@ if (!(Test-Path $icoPath)) {
 
 if (!(Test-Path $licensePath)) {
   throw "Licença não encontrada: $licensePath"
+}
+
+if (!(Test-Path $wxlPath)) {
+  throw "Arquivo de localização não encontrado: $wxlPath"
 }
 
 # Garante csproj: OutputType=WinExe + ApplicationIcon
@@ -360,6 +365,7 @@ try {
   ExecOrThrow $light @(
     "-nologo",
     "-cultures:pt-BR",
+    "-loc", $wxlPath,
     "-ext", "WixUIExtension",
     "-ext", "WixUtilExtension",
     "-out", $msiOut,
