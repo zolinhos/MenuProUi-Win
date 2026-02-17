@@ -26,7 +26,7 @@
                   HorizontalContentAlignment="Center"
                   VerticalContentAlignment="Center"
                   ToolTip.Tip="Menu de Clientes">&#xE716;</Button>
-          <TextBlock VerticalAlignment="Center" Text="Clientes" FontWeight="Bold"/>
+          <TextBlock VerticalAlignment="Center" Text="Clientes" FontWeight="Bold" PointerPressed="OnClientsLabelPressed"/>
         </StackPanel>
 
         <!-- Menu Acessos -->
@@ -40,7 +40,7 @@
                   HorizontalContentAlignment="Center"
                   VerticalContentAlignment="Center"
                   ToolTip.Tip="Menu de Acessos">&#xE7F4;</Button>
-          <TextBlock VerticalAlignment="Center" Text="Acessos" FontWeight="Bold"/>
+          <TextBlock VerticalAlignment="Center" Text="Acessos" FontWeight="Bold" PointerPressed="OnAccessesLabelPressed"/>
         </StackPanel>
 
         <!-- Spacer -->
@@ -62,11 +62,6 @@
           <Button Content="✎ Editar Cliente" Click="OnEditClient" Padding="12,8" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Background="Transparent"/>
           <Border BorderBrush="#333" BorderThickness="0,1,0,0"/>
           <Button Content="✕ Excluir Cliente" Click="OnDeleteClient" Padding="12,8" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Background="Transparent"/>
-          <Border BorderBrush="#333" BorderThickness="0,1,0,0" Margin="0,2,0,0"/>
-          <TextBlock Text="Escolher ícone" Opacity="0.75" Margin="12,8,12,4"/>
-          <Button Content=" Pessoas" Click="OnSetClientsMenuIcon" Tag="&#xE716;" Padding="12,6" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Background="Transparent"/>
-          <Button Content=" Empresa" Click="OnSetClientsMenuIcon" Tag="&#xE77B;" Padding="12,6" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Background="Transparent"/>
-          <Button Content=" Pasta" Click="OnSetClientsMenuIcon" Tag="&#xE8B7;" Padding="12,6" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Background="Transparent"/>
         </StackPanel>
       </Border>
     </Popup>
@@ -81,11 +76,6 @@
           <Button Content="✎ Editar Acesso" Click="OnEditAccess" Padding="12,8" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Background="Transparent"/>
           <Border BorderBrush="#333" BorderThickness="0,1,0,0"/>
           <Button Content="✕ Excluir Acesso" Click="OnDeleteAccess" Padding="12,8" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Background="Transparent"/>
-          <Border BorderBrush="#333" BorderThickness="0,1,0,0" Margin="0,2,0,0"/>
-          <TextBlock Text="Escolher ícone" Opacity="0.75" Margin="12,8,12,4"/>
-          <Button Content=" Computador" Click="OnSetAccessesMenuIcon" Tag="&#xE7F4;" Padding="12,6" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Background="Transparent"/>
-          <Button Content=" Conexão" Click="OnSetAccessesMenuIcon" Tag="&#xE71B;" Padding="12,6" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Background="Transparent"/>
-          <Button Content=" Rede" Click="OnSetAccessesMenuIcon" Tag="&#xE774;" Padding="12,6" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Background="Transparent"/>
         </StackPanel>
       </Border>
     </Popup>

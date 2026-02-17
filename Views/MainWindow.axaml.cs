@@ -24,6 +24,8 @@ public partial class MainWindow : Window
     private MainWindowViewModel VM => (MainWindowViewModel)DataContext!;
     private readonly CsvRepository _repo = new();
     private readonly Dictionary<Guid, ConnectivityStatus> _connectivityByAccess = new();
+    private static readonly string[] ClientsMenuIcons = { "\uE716", "\uE77B", "\uE8B7" };
+    private static readonly string[] AccessesMenuIcons = { "\uE7F4", "\uE71B", "\uE774" };
 
     /// <summary>
     /// Inicializa a janela principal.
@@ -53,6 +55,7 @@ public partial class MainWindow : Window
         // Modifiers: Ctrl, Alt, Shift, Meta
         var hasCtrl = e.KeyModifiers.HasFlag(KeyModifiers.Control);
         var hasShift = e.KeyModifiers.HasFlag(KeyModifiers.Shift);
+        var hasAlt = e.KeyModifiers.HasFlag(KeyModifiers.Alt);
 
         try
         {
@@ -187,6 +190,22 @@ public partial class MainWindow : Window
                 return;
             }
 
+            // Ctrl+Alt+C - Alternar ícone de Clientes
+            if (hasCtrl && hasAlt && e.Key == Key.C)
+            {
+                e.Handled = true;
+                CycleMenuIcon("ClientsMenuBtn", ClientsMenuIcons);
+                return;
+            }
+
+            // Ctrl+Alt+A - Alternar ícone de Acessos
+            if (hasCtrl && hasAlt && e.Key == Key.A)
+            {
+                e.Handled = true;
+                CycleMenuIcon("AccessesMenuBtn", AccessesMenuIcons);
+                return;
+            }
+
             // Enter - Abrir Acesso
             if (e.Key == Key.Return)
             {
@@ -252,8 +271,12 @@ Acessos:
   Ctrl+Shift+E          Editar acesso selecionado
   Ctrl+Shift+Delete     Excluir acesso selecionado
     Ctrl+Shift+K          Checar conectividade
+    Ctrl+Alt+A            Alterna ícone do menu de acessos
   Enter                 Abre/conecta ao acesso selecionado
   Ctrl+Shift+F          Focar campo de busca de acessos
+
+Interface:
+    Ctrl+Alt+C            Alterna ícone do menu de clientes
 
 Busca:
   Ctrl+L                Limpa todos os campos de busca
@@ -309,8 +332,29 @@ Versão 1.7.3 - MenuProUI";
     private void ToggleMenu(string popupName)
     {
         var popup = this.FindControl<Popup>(popupName);
-        if (popup != null)
-            popup.IsOpen = !popup.IsOpen;
+        if (popup == null) return;
+
+        var shouldOpen = !popup.IsOpen;
+
+        var clientsMenu = this.FindControl<Popup>("ClientsMenu");
+        var accessesMenu = this.FindControl<Popup>("AccessesMenu");
+
+        if (clientsMenu != null) clientsMenu.IsOpen = false;
+        if (accessesMenu != null) accessesMenu.IsOpen = false;
+
+        popup.IsOpen = shouldOpen;
+    }
+
+    private void OnClientsLabelPressed(object? sender, PointerPressedEventArgs e)
+    {
+        e.Handled = true;
+        ToggleMenu("ClientsMenu");
+    }
+
+    private void OnAccessesLabelPressed(object? sender, PointerPressedEventArgs e)
+    {
+        e.Handled = true;
+        ToggleMenu("AccessesMenu");
     }
 
     /// <summary>Fecha todos os menus popup abertos</summary>
@@ -706,26 +750,23 @@ Versão 1.7.3 - MenuProUI";
         }
     }
 
-    private void OnSetClientsMenuIcon(object? sender, RoutedEventArgs e)
+    private void CycleMenuIcon(string buttonName, IReadOnlyList<string> icons)
     {
-        if (sender is Button { Tag: string icon })
-            SetTopMenuIcon("ClientsMenuBtn", icon);
+        if (icons.Count == 0) return;
 
-        CloseMenus();
-    }
-
-    private void OnSetAccessesMenuIcon(object? sender, RoutedEventArgs e)
-    {
-        if (sender is Button { Tag: string icon })
-            SetTopMenuIcon("AccessesMenuBtn", icon);
-
-        CloseMenus();
-    }
-
-    private void SetTopMenuIcon(string buttonName, string icon)
-    {
         var button = this.FindControl<Button>(buttonName);
-        if (button != null)
-            button.Content = icon;
+        if (button == null) return;
+
+        var current = button.Content?.ToString() ?? string.Empty;
+        var index = -1;
+        for (var i = 0; i < icons.Count; i++)
+        {
+            if (icons[i] != current) continue;
+            index = i;
+            break;
+        }
+
+        var nextIndex = index >= 0 ? (index + 1) % icons.Count : 0;
+        button.Content = icons[nextIndex];
     }
 }
