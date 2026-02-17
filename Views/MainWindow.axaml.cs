@@ -705,4 +705,27 @@ Versão 1.7.3 - MenuProUI";
             _ = new ConfirmDialog($"Falha ao abrir:\n{ex.Message}", "Erro").ShowDialog<bool>(this);
         }
     }
+
+    private void OnSetClientsMenuIcon(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string icon })
+            SetTopMenuIcon("ClientsMenuBtn", icon);
+
+        CloseMenus();
+    }
+
+    private void OnSetAccessesMenuIcon(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string icon })
+            SetTopMenuIcon("AccessesMenuBtn", icon);
+
+        CloseMenus();
+    }
+
+    private void SetTopMenuIcon(string buttonName, string icon)
+    {
+        var button = this.FindControl<Button>(buttonName);
+        if (button != null)
+            button.Content = icon;
+    }
 }
