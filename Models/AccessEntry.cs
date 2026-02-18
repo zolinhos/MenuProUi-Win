@@ -80,10 +80,17 @@ public class AccessEntry
     [Ignore]
     public string ConnectivityStatusIcon => ConnectivityStatus switch
     {
-        ConnectivityStatus.Online => "🟢",
-        ConnectivityStatus.Offline => "🔴",
-        ConnectivityStatus.Checking => "🟡",
-        _ => ""
+        ConnectivityStatus.Online => "●",
+        ConnectivityStatus.Checking => "…",
+        _ => "x"
+    };
+
+    [Ignore]
+    public string ConnectivityStatusColor => ConnectivityStatus switch
+    {
+        ConnectivityStatus.Online => "#16A34A",
+        ConnectivityStatus.Checking => "#EAB308",
+        _ => "#EF4444"
     };
 
     [Ignore]
