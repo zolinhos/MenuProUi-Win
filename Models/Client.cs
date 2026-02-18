@@ -31,18 +31,16 @@ public class Client
     public ConnectivityStatus ConnectivityStatus { get; set; } = ConnectivityStatus.Unknown;
 
     [Ignore]
-    public string ConnectivityStatusIcon => ConnectivityStatus switch
+    public string ConnectivityIndicatorText => ConnectivityStatus switch
     {
-        ConnectivityStatus.Online => "●",
-        ConnectivityStatus.Checking => "…",
+        ConnectivityStatus.Online => "",
         _ => "x"
     };
 
     [Ignore]
-    public string ConnectivityStatusColor => ConnectivityStatus switch
+    public string ConnectivityIndicatorBackground => ConnectivityStatus switch
     {
         ConnectivityStatus.Online => "#16A34A",
-        ConnectivityStatus.Checking => "#EAB308",
-        _ => "#EF4444"
+        _ => "#DC2626"
     };
 }

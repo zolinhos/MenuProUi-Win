@@ -120,11 +120,20 @@
           <ListBox.ItemTemplate>
             <DataTemplate>
               <Grid ColumnDefinitions="30,*" Margin="4,2">
-                <TextBlock Grid.Column="0"
-                           Text="{Binding ConnectivityStatusIcon}"
-                           Foreground="{Binding ConnectivityStatusColor}"
-                           FontWeight="Bold"
-                           VerticalAlignment="Center"/>
+                <Border Grid.Column="0"
+                        Width="14"
+                        Height="14"
+                        CornerRadius="7"
+                        Background="{Binding ConnectivityIndicatorBackground}"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Center">
+                  <TextBlock Text="{Binding ConnectivityIndicatorText}"
+                             Foreground="#FFFFFF"
+                             FontWeight="Bold"
+                             FontSize="10"
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Center"/>
+                </Border>
                 <TextBlock Grid.Column="1" Text="{Binding Nome}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
               </Grid>
             </DataTemplate>
@@ -199,12 +208,21 @@
             <DataTemplate>
               <Border Padding="5" Margin="0,1" CornerRadius="6">
                 <Grid ColumnDefinitions="70,90,*,170" RowDefinitions="Auto,Auto" RowSpacing="0" ColumnSpacing="8">
-                  <TextBlock Grid.Column="0"
-                             Grid.RowSpan="2"
-                             Text="{Binding ConnectivityStatusIcon}"
-                             Foreground="{Binding ConnectivityStatusColor}"
-                             FontWeight="Bold"
-                             VerticalAlignment="Center"/>
+                  <Border Grid.Column="0"
+                          Grid.RowSpan="2"
+                          Width="14"
+                          Height="14"
+                          CornerRadius="7"
+                          Background="{Binding ConnectivityIndicatorBackground}"
+                          VerticalAlignment="Center"
+                          HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding ConnectivityIndicatorText}"
+                               Foreground="#FFFFFF"
+                               FontWeight="Bold"
+                               FontSize="10"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"/>
+                  </Border>
                   <TextBlock Grid.Column="1" Grid.RowSpan="2" Text="{Binding TypeIcon}" Opacity="0.95" VerticalAlignment="Center" FontSize="18"/>
                   <TextBlock Grid.Column="2" Grid.Row="0" Text="{Binding DisplayMain}" TextTrimming="CharacterEllipsis" FontWeight="SemiBold"/>
                   <TextBlock Grid.Column="2" Grid.Row="1" Text="{Binding DisplayDetails}" TextTrimming="CharacterEllipsis" Opacity="0.85" FontSize="12"/>
