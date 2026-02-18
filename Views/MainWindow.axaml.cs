@@ -802,7 +802,12 @@ Versão 1.7.5 - MenuProUI";
         ApplyConnectivityToVisibleAccesses();
         VM.ApplyClientFilter();
 
-        var results = await ConnectivityChecker.CheckAllAsync(accesses);
+        var fallbackPorts = ParsePortsCsv(_preferences.UrlFallbackPortsCsv, new[] { 443, 80, 8443, 8080, 9443 });
+        var results = await ConnectivityChecker.CheckAllAsync(
+            accesses,
+            timeoutMs: Math.Clamp(_preferences.ConnectivityTimeoutMs, 500, 60000),
+            maxConcurrency: Math.Clamp(_preferences.ConnectivityMaxConcurrency, 1, 128),
+            urlFallbackPorts: fallbackPorts);
         foreach (var pair in results)
             _connectivityByAccess[pair.Key] = pair.Value ? ConnectivityStatus.Online : ConnectivityStatus.Offline;
 
@@ -822,6 +827,19 @@ Versão 1.7.5 - MenuProUI";
         }
 
         VM.ApplyAccessesFilter();
+    }
+
+    private static List<int> ParsePortsCsv(string? raw, IReadOnlyList<int> defaults)
+    {
+        var result = new List<int>();
+        foreach (var part in (raw ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (!int.TryParse(part.Trim(), out var p)) continue;
+            if (p is < 1 or > 65535) continue;
+            if (!result.Contains(p)) result.Add(p);
+        }
+
+        return result.Count > 0 ? result : defaults.ToList();
     }
 
     private void ApplyClientConnectivityIndicators()
@@ -1035,9 +1053,24 @@ Versão 1.7.5 - MenuProUI";
         SavePreferences();
     }
 
+    private async void OnOpenSettings(object? sender, RoutedEventArgs e)
+    {
+        CloseMenus();
+        var dialog = new SettingsDialog(_preferences);
+        var ok = await dialog.ShowDialog<bool>(this);
+        if (!ok) return;
+
+        _preferences = dialog.Result;
+        SavePreferences();
+    }
+
     private void LoadPreferences()
     {
         _preferences = _preferencesService.Load();
+        _preferences.ConnectivityTimeoutMs = Math.Clamp(_preferences.ConnectivityTimeoutMs <= 0 ? 3000 : _preferences.ConnectivityTimeoutMs, 500, 60000);
+        _preferences.ConnectivityMaxConcurrency = Math.Clamp(_preferences.ConnectivityMaxConcurrency <= 0 ? 24 : _preferences.ConnectivityMaxConcurrency, 1, 128);
+        if (string.IsNullOrWhiteSpace(_preferences.UrlFallbackPortsCsv))
+            _preferences.UrlFallbackPortsCsv = "443,80,8443,8080,9443";
 
         var clientsBtn = this.FindControl<Button>("ClientsMenuBtn");
         if (clientsBtn != null && !string.IsNullOrWhiteSpace(_preferences.ClientsIcon))

@@ -1,0 +1,33 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="MenuProUI.Dialogs.SettingsDialog"
+        Width="620" Height="440"
+        WindowStartupLocation="CenterOwner"
+        Title="Configurações"
+        CanResize="False">
+  <ScrollViewer Margin="16" VerticalScrollBarVisibility="Auto">
+    <StackPanel Spacing="10">
+      <TextBlock Text="Conectividade" FontSize="16" FontWeight="SemiBold"/>
+      <TextBlock Text="Timeout (ms)" />
+      <TextBox Name="ConnectivityTimeoutBox" Watermark="Ex: 3000"/>
+
+      <TextBlock Text="Máximo de concorrência" />
+      <TextBox Name="ConnectivityConcurrencyBox" Watermark="Ex: 24"/>
+
+      <TextBlock Text="Portas fallback URL (CSV)" />
+      <TextBox Name="UrlFallbackPortsBox" Watermark="Ex: 443,80,8443,8080,9443"/>
+
+      <Border BorderBrush="#333" BorderThickness="0,1,0,0" Margin="0,8,0,8"/>
+
+      <TextBlock Text="RDP" FontSize="16" FontWeight="SemiBold"/>
+      <CheckBox Name="RdpForceFullscreenBox" Content="Forçar abertura em tela cheia"/>
+
+      <Border BorderBrush="#333" BorderThickness="0,1,0,0" Margin="0,8,0,8"/>
+
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+        <Button Content="Cancelar" Click="OnCancel"/>
+        <Button Content="Salvar" Click="OnSave"/>
+      </StackPanel>
+    </StackPanel>
+  </ScrollViewer>
+</Window>

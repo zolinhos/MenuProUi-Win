@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
 using MenuProUI.Models;
 
@@ -9,9 +10,13 @@ namespace MenuProUI.Services;
 
 public static class ConnectivityChecker
 {
-    private static readonly int[] UrlFallbackPorts = { 443, 80, 8443, 8080, 9443 };
+    private static readonly int[] DefaultUrlFallbackPorts = { 443, 80, 8443, 8080, 9443 };
 
-    public static async Task<Dictionary<Guid, bool>> CheckAllAsync(IEnumerable<AccessEntry> accesses, int timeoutMs = 3000)
+    public static async Task<Dictionary<Guid, bool>> CheckAllAsync(
+        IEnumerable<AccessEntry> accesses,
+        int timeoutMs = 3000,
+        int maxConcurrency = 24,
+        IReadOnlyList<int>? urlFallbackPorts = null)
     {
         var list = accesses.ToList();
         var endpointToAccessIds = new Dictionary<string, List<Guid>>(StringComparer.OrdinalIgnoreCase);
@@ -19,7 +24,7 @@ public static class ConnectivityChecker
 
         foreach (var access in list)
         {
-            foreach (var endpoint in ResolveHostPorts(access))
+            foreach (var endpoint in ResolveHostPorts(access, urlFallbackPorts))
             {
                 var key = BuildEndpointKey(endpoint.host, endpoint.port);
                 if (!endpointToAccessIds.TryGetValue(key, out var ids))
@@ -32,10 +37,21 @@ public static class ConnectivityChecker
             }
         }
 
+        var concurrency = Math.Clamp(maxConcurrency, 1, 128);
+        using var gate = new SemaphoreSlim(concurrency, concurrency);
+
         var probeTasks = endpointToProbe.Select(async pair =>
         {
-            var ok = await ProbeTcpAsync(pair.Value.host, pair.Value.port, timeoutMs);
-            return (pair.Key, ok);
+            await gate.WaitAsync();
+            try
+            {
+                var ok = await ProbeTcpAsync(pair.Value.host, pair.Value.port, timeoutMs);
+                return (pair.Key, ok);
+            }
+            finally
+            {
+                gate.Release();
+            }
         });
 
         var probeResults = await Task.WhenAll(probeTasks);
@@ -52,9 +68,12 @@ public static class ConnectivityChecker
         return perAccess;
     }
 
-    public static async Task<bool> CheckAsync(AccessEntry access, int timeoutMs = 3000)
+    public static async Task<bool> CheckAsync(
+        AccessEntry access,
+        int timeoutMs = 3000,
+        IReadOnlyList<int>? urlFallbackPorts = null)
     {
-        foreach (var endpoint in ResolveHostPorts(access))
+        foreach (var endpoint in ResolveHostPorts(access, urlFallbackPorts))
         {
             if (await ProbeTcpAsync(endpoint.host, endpoint.port, timeoutMs))
                 return true;
@@ -85,7 +104,7 @@ public static class ConnectivityChecker
         }
     }
 
-    private static List<(string host, int port)> ResolveHostPorts(AccessEntry access)
+    private static List<(string host, int port)> ResolveHostPorts(AccessEntry access, IReadOnlyList<int>? urlFallbackPorts)
     {
         switch (access.Tipo)
         {
@@ -124,7 +143,7 @@ public static class ConnectivityChecker
                     var ports = new List<int> { primaryPort };
                     if (uri.Port <= 0)
                     {
-                        foreach (var fallback in UrlFallbackPorts)
+                        foreach (var fallback in (urlFallbackPorts is { Count: > 0 } ? urlFallbackPorts : DefaultUrlFallbackPorts))
                         {
                             if (!ports.Contains(fallback))
                                 ports.Add(fallback);

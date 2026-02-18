@@ -13,7 +13,7 @@
 
     <!-- Top bar with dropdown menus -->
     <Border Grid.ColumnSpan="2" CornerRadius="10" Padding="12" BorderBrush="#333" BorderThickness="1">
-      <Grid ColumnDefinitions="Auto,Auto,260,*,Auto,Auto,Auto,Auto" ColumnSpacing="15">
+      <Grid ColumnDefinitions="Auto,Auto,260,*,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="15">
         
         <!-- Menu Clientes -->
         <StackPanel Orientation="Horizontal" Spacing="5">
@@ -54,10 +54,11 @@
         <Border Grid.Column="3"/>
 
         <!-- Quick actions -->
-        <Button Grid.Column="4" Content="Tema" Click="OnToggleTheme" ToolTip.Tip="Alternar tema claro/escuro (Ctrl+Alt+T)"/>
-        <Button Grid.Column="5" Content="Densidade" Click="OnToggleDensity" ToolTip.Tip="Alternar densidade da lista"/>
-        <Button Grid.Column="6" Content="Abrir" Click="OnOpenAccess" ToolTip.Tip="Abrir acesso selecionado (Enter)"/>
-        <Button Grid.Column="7" Content="Checar Conectividade" Click="OnCheckConnectivity" ToolTip.Tip="Checar conectividade (Ctrl+Shift+K)"/>
+        <Button Grid.Column="4" Content="Configurações" Click="OnOpenSettings" ToolTip.Tip="Abrir configurações"/>
+        <Button Grid.Column="5" Content="Tema" Click="OnToggleTheme" ToolTip.Tip="Alternar tema claro/escuro (Ctrl+Alt+T)"/>
+        <Button Grid.Column="6" Content="Densidade" Click="OnToggleDensity" ToolTip.Tip="Alternar densidade da lista"/>
+        <Button Grid.Column="7" Content="Abrir" Click="OnOpenAccess" ToolTip.Tip="Abrir acesso selecionado (Enter)"/>
+        <Button Grid.Column="8" Content="Checar Conectividade" Click="OnCheckConnectivity" ToolTip.Tip="Checar conectividade (Ctrl+Shift+K)"/>
       </Grid>
     </Border>
 
@@ -74,6 +75,8 @@
           <Button Content="⭳ Exportar backup (3 arquivos)" Click="OnExportBackup" Padding="12,8" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Background="Transparent"/>
           <Border BorderBrush="#333" BorderThickness="0,1,0,0"/>
           <Button Content="⭱ Importar backup" Click="OnImportBackup" Padding="12,8" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Background="Transparent"/>
+          <Border BorderBrush="#333" BorderThickness="0,1,0,0"/>
+          <Button Content="⚙ Configurações" Click="OnOpenSettings" Padding="12,8" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Background="Transparent"/>
         </StackPanel>
       </Border>
     </Popup>

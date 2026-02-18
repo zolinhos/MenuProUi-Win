@@ -113,6 +113,7 @@ public static class AccessLauncher
     private static void OpenRdp(AccessEntry e)
     {
         if (string.IsNullOrWhiteSpace(e.Host)) return;
+        var prefs = new AppPreferencesService().Load();
 
         var port = (e.Porta is > 0) ? e.Porta.Value : 3389;
 
@@ -138,7 +139,7 @@ public static class AccessLauncher
             lines.Add($"username:s:{user}");
 
         // Primeira abertura: força tela cheia para melhor experiência inicial.
-        var fullScreen = e.RdpFullScreen || e.OpenCount == 0;
+        var fullScreen = prefs.RdpForceFullscreen || e.RdpFullScreen || e.OpenCount == 0;
 
         // tela / tamanho
         if (fullScreen)
