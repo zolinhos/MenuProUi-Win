@@ -148,7 +148,8 @@ public static class AccessLauncher
         else
         {
             lines.Add("screen mode id:i:1");
-            if (e.RdpWidth is > 0 && e.RdpHeight is > 0)
+            // Tamanho fixo só deve ser aplicado quando NÃO há resolução dinâmica.
+            if (!e.RdpDynamicResolution && e.RdpWidth is > 0 && e.RdpHeight is > 0)
             {
                 lines.Add($"desktopwidth:i:{e.RdpWidth}");
                 lines.Add($"desktopheight:i:{e.RdpHeight}");
@@ -167,7 +168,8 @@ public static class AccessLauncher
         Process.Start(new ProcessStartInfo
         {
             FileName = "mstsc.exe",
-            Arguments = $"\"{file}\"",
+            // /f força fullscreen na inicialização quando solicitado.
+            Arguments = fullScreen ? $"/f \"{file}\"" : $"\"{file}\"",
             UseShellExecute = true
         });
     }
