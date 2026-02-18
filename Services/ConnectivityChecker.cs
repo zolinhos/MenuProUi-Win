@@ -9,22 +9,62 @@ namespace MenuProUI.Services;
 
 public static class ConnectivityChecker
 {
+    private static readonly int[] UrlFallbackPorts = { 443, 80, 8443, 8080, 9443 };
+
     public static async Task<Dictionary<Guid, bool>> CheckAllAsync(IEnumerable<AccessEntry> accesses, int timeoutMs = 3000)
     {
         var list = accesses.ToList();
-        var tasks = list.Select(async access =>
+        var endpointToAccessIds = new Dictionary<string, List<Guid>>(StringComparer.OrdinalIgnoreCase);
+        var endpointToProbe = new Dictionary<string, (string host, int port)>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var access in list)
         {
-            var ok = await CheckAsync(access, timeoutMs);
-            return (access.Id, ok);
+            foreach (var endpoint in ResolveHostPorts(access))
+            {
+                var key = BuildEndpointKey(endpoint.host, endpoint.port);
+                if (!endpointToAccessIds.TryGetValue(key, out var ids))
+                {
+                    ids = new List<Guid>();
+                    endpointToAccessIds[key] = ids;
+                    endpointToProbe[key] = endpoint;
+                }
+                ids.Add(access.Id);
+            }
+        }
+
+        var probeTasks = endpointToProbe.Select(async pair =>
+        {
+            var ok = await ProbeTcpAsync(pair.Value.host, pair.Value.port, timeoutMs);
+            return (pair.Key, ok);
         });
 
-        var results = await Task.WhenAll(tasks);
-        return results.ToDictionary(x => x.Id, x => x.ok);
+        var probeResults = await Task.WhenAll(probeTasks);
+        var perAccess = list.ToDictionary(a => a.Id, _ => false);
+        var probeMap = probeResults.ToDictionary(x => x.Key, x => x.ok, StringComparer.OrdinalIgnoreCase);
+
+        foreach (var pair in endpointToAccessIds)
+        {
+            if (!probeMap.TryGetValue(pair.Key, out var ok) || !ok) continue;
+            foreach (var accessId in pair.Value)
+                perAccess[accessId] = true;
+        }
+
+        return perAccess;
     }
 
     public static async Task<bool> CheckAsync(AccessEntry access, int timeoutMs = 3000)
     {
-        var (host, port) = ResolveHostPort(access);
+        foreach (var endpoint in ResolveHostPorts(access))
+        {
+            if (await ProbeTcpAsync(endpoint.host, endpoint.port, timeoutMs))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static async Task<bool> ProbeTcpAsync(string host, int port, int timeoutMs)
+    {
         if (string.IsNullOrWhiteSpace(host) || port <= 0 || port > 65535)
             return false;
 
@@ -45,32 +85,82 @@ public static class ConnectivityChecker
         }
     }
 
-    private static (string? host, int port) ResolveHostPort(AccessEntry access)
+    private static List<(string host, int port)> ResolveHostPorts(AccessEntry access)
     {
         switch (access.Tipo)
         {
             case AccessType.SSH:
-                return (access.Host, access.Porta is > 0 ? access.Porta.Value : 22);
+                {
+                    var host = (access.Host ?? string.Empty).Trim();
+                    if (string.IsNullOrWhiteSpace(host))
+                        return [];
+
+                    var port = access.Porta is > 0 ? access.Porta.Value : 22;
+                    return [(host, port)];
+                }
 
             case AccessType.RDP:
-                return (access.Host, access.Porta is > 0 ? access.Porta.Value : 3389);
+                {
+                    var host = (access.Host ?? string.Empty).Trim();
+                    if (string.IsNullOrWhiteSpace(host))
+                        return [];
+
+                    var port = access.Porta is > 0 ? access.Porta.Value : 3389;
+                    return [(host, port)];
+                }
 
             case AccessType.URL:
                 {
-                    var raw = (access.Url ?? string.Empty).Trim();
+                    var raw = NormalizeUrlInput(access.Url ?? string.Empty);
                     if (string.IsNullOrWhiteSpace(raw))
-                        return (null, 0);
+                        return [];
 
-                    var candidate = raw.Contains("://", StringComparison.Ordinal) ? raw : $"https://{raw}";
-                    if (!Uri.TryCreate(candidate, UriKind.Absolute, out var uri))
-                        return (null, 0);
+                    if (!Uri.TryCreate(raw, UriKind.Absolute, out var uri) || string.IsNullOrWhiteSpace(uri.Host))
+                        return [];
 
-                    var resolvedPort = uri.Port > 0 ? uri.Port : (string.Equals(uri.Scheme, "https", StringComparison.OrdinalIgnoreCase) ? 443 : 80);
-                    return (uri.Host, resolvedPort);
+                    var defaultPort = DefaultPortForScheme(uri.Scheme);
+                    var primaryPort = uri.Port > 0 ? uri.Port : defaultPort;
+
+                    var ports = new List<int> { primaryPort };
+                    if (uri.Port <= 0)
+                    {
+                        foreach (var fallback in UrlFallbackPorts)
+                        {
+                            if (!ports.Contains(fallback))
+                                ports.Add(fallback);
+                        }
+                    }
+
+                    return ports
+                        .Where(p => p is > 0 and <= 65535)
+                        .Select(p => (uri.Host, p))
+                        .ToList();
                 }
 
             default:
-                return (null, 0);
+                return [];
         }
     }
+
+    private static string NormalizeUrlInput(string raw)
+    {
+        var trimmed = (raw ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(trimmed))
+            return string.Empty;
+
+        if (trimmed.Contains("://", StringComparison.Ordinal))
+            return trimmed;
+
+        // Igual ao MAC: sem esquema explícito, assume HTTP primeiro.
+        return $"http://{trimmed}";
+    }
+
+    private static int DefaultPortForScheme(string? scheme) => (scheme ?? string.Empty).ToLowerInvariant() switch
+    {
+        "https" => 443,
+        "ftp" => 21,
+        _ => 80
+    };
+
+    private static string BuildEndpointKey(string host, int port) => $"{host.Trim().ToLowerInvariant()}:{port}";
 }
