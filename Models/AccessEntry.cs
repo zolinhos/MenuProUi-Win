@@ -41,7 +41,7 @@ public class AccessEntry
     public bool RdpIgnoreCert { get; set; } = true;
     
     /// <summary>Se true, abre RDP em tela cheia</summary>
-    public bool RdpFullScreen { get; set; } = false;
+    public bool RdpFullScreen { get; set; } = true;
     
     /// <summary>Se true, ajusta resolução dinamicamente (melhor UX)</summary>
     public bool RdpDynamicResolution { get; set; } = true;

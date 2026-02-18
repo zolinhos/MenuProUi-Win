@@ -137,8 +137,11 @@ public static class AccessLauncher
         if (!string.IsNullOrWhiteSpace(user))
             lines.Add($"username:s:{user}");
 
+        // Primeira abertura: força tela cheia para melhor experiência inicial.
+        var fullScreen = e.RdpFullScreen || e.OpenCount == 0;
+
         // tela / tamanho
-        if (e.RdpFullScreen)
+        if (fullScreen)
         {
             lines.Add("screen mode id:i:2");
         }
@@ -152,8 +155,10 @@ public static class AccessLauncher
             }
         }
 
-        // “redimensionar” no mstsc é via Smart Sizing (escala), não é dynamic real como o xfreerdp
-        // Se você marcou RdpDynamicResolution no cadastro, vamos ligar smart sizing
+        // Suporte a redimensionamento da sessão no cliente RDP.
+        lines.Add($"dynamic resolution:i:{(e.RdpDynamicResolution ? 1 : 0)}");
+
+        // Smart sizing mantém escalonamento quando em modo janela.
         lines.Add(e.RdpDynamicResolution ? "smart sizing:i:1" : "smart sizing:i:0");
 
         // grava em Unicode (formato comum de .rdp no Windows)
