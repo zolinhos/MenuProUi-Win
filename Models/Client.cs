@@ -36,6 +36,6 @@ public class Client
         ConnectivityStatus.Online => "🟢",
         ConnectivityStatus.Offline => "🔴",
         ConnectivityStatus.Checking => "🟡",
-        _ => "⚪"
+        _ => ""
     };
 }

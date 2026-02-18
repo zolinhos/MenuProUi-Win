@@ -83,7 +83,7 @@ public class AccessEntry
         ConnectivityStatus.Online => "🟢",
         ConnectivityStatus.Offline => "🔴",
         ConnectivityStatus.Checking => "🟡",
-        _ => "⚪"
+        _ => ""
     };
 
     [Ignore]
